@@ -151,6 +151,44 @@ class TrainDataset(Dataset):
         return len(self.label)
 
 
+class EvalDataset(Dataset):
+    def __init__(self, data_paths, flanking_size):
+        ## data_paths: list of file paths
+        training_matrix = []
+        label = []
+        positions = []
+        for datapath in data_paths:
+            with open(datapath, 'r') as fin:
+                single_feature_matrix = []
+                idx = 0
+                for line in fin:
+                    idx += 1
+                    if idx <= flanking_size * 2 + 1:
+                        line = [float(v) for v in line.strip().rstrip(',').split(',')]
+                        single_feature_matrix.append(line)
+                    elif idx == flanking_size * 2 + 2:
+                        label.append(int(line.strip().split('\t')[0]))
+                        positions.append(line.strip().split('\t')[1])
+                        training_matrix.append(single_feature_matrix)
+                        single_feature_matrix = []
+                        idx = 0
+        assert len(label) > 0
+        nfeatures = len(training_matrix[0][0])
+        self.training_matrix = np.array(training_matrix).reshape(-1, flanking_size * 2 + 1, nfeatures)  # [N,41,38]
+        assert len(label) == len(self.training_matrix)
+        self.label = np.array(label)  # [N,]
+        self.positions = positions  # [N,]
+
+    def __getitem__(self, i):
+        feature_matrix = self.training_matrix[i]
+        label = self.label[i]
+        position = self.positions[i]
+        return position, feature_matrix, label
+
+    def __len__(self):
+        return len(self.label)
+
+
 # class PredictDataset(Dataset):
 #     def __init__(self, datapath):
 #         # tables.set_blosc_max_threads(16)
@@ -226,8 +264,8 @@ if __name__ == '__main__':
     epoch = 0
     filepaths = [opt.data + '/' + file for file in os.listdir(opt.data)]
     dataset = TrainDataset(data_paths=filepaths, flanking_size=20)
-    while epoch < 10:
-        dl = DataLoader(dataset, batch_size=2000, shuffle=True)
+    while epoch < 1:
+        dl = DataLoader(dataset, batch_size=500, shuffle=True)
         for batch in dl:
             feature_matrices, labels = batch
             print("Epoch ", epoch, ":", feature_matrices.shape)
