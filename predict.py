@@ -48,7 +48,9 @@ def predict(model, test_dataset, batch_size, output_file, device):
         ## write to csv file
         ## position, zygosity, quality
         for i in range(len(positions)):
-            fout.write(positions[i] + ',' + str(zy_output[i]) + ',' + str(zy_qual[i]) + '\n')
+            fout.write(
+                positions[i] + ',' + str(zy_output[i]) + ',' + str(zy_qual[i]) + ',' + str(zy_output_[i][0]) + ',' + str(
+                    zy_output_[i][1]) + ',' + str(zy_output_[i][2]) + ',' + str(zy_output_[i][3]) + '\n')
     fout.close()
 
 
