@@ -1,4 +1,6 @@
+import torch
 from torch.utils.data import Dataset, DataLoader
+import torch.nn.functional as F
 import numpy as np
 import argparse
 import os
@@ -151,6 +153,35 @@ class TrainDataset(Dataset):
         return len(self.label)
 
 
+class TrainDataset2(Dataset):
+    def __init__(self, datapath):
+        data = np.load(datapath, allow_pickle=True)
+        feature_positions = data.files
+        labelpath = os.path.splitext(datapath)[0] + '.label'
+        label_positions = []
+        labels = []
+        with open(labelpath, 'r') as fin:
+            for line in fin:
+                fields = line.strip().split('\t')
+                labels.append(int(fields[0]))
+                label_positions.append(fields[1])
+        self.data = data
+        self.feature_positions = feature_positions
+        self.labels = labels
+        self.label_positions = label_positions
+
+    def __getitem__(self, i):
+        feature_pos = self.feature_positions[i]
+        feature_matrix = self.data[feature_pos]  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        label_pos = self.label_positions[i]
+        label = self.labels[i]
+        assert feature_pos == label_pos
+        return feature_matrix, label
+
+    def __len__(self):
+        return len(self.labels)
+
+
 class EvalDataset(Dataset):
     def __init__(self, data_paths, flanking_size):
         ## data_paths: list of file paths
@@ -187,6 +218,35 @@ class EvalDataset(Dataset):
 
     def __len__(self):
         return len(self.label)
+
+
+class EvalDataset2(Dataset):
+    def __init__(self, datapath):
+        data = np.load(datapath, allow_pickle=True)
+        feature_positions = data.files
+        labelpath = os.path.splitext(datapath)[0] + '.label'
+        label_positions = []
+        labels = []
+        with open(labelpath, 'r') as fin:
+            for line in fin:
+                fields = line.strip().split('\t')
+                labels.append(int(fields[0]))
+                label_positions.append(fields[1])
+        self.data = data
+        self.feature_positions = feature_positions
+        self.labels = labels
+        self.label_positions = label_positions
+
+    def __getitem__(self, i):
+        feature_pos = self.feature_positions[i]
+        feature_matrix = self.data[feature_pos]  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        label_pos = self.label_positions[i]
+        label = self.labels[i]
+        assert feature_pos == label_pos
+        return feature_pos, feature_matrix, label
+
+    def __len__(self):
+        return len(self.labels)
 
 
 # class PredictDataset(Dataset):
@@ -256,28 +316,118 @@ class PredictDataset(Dataset):
         return len(self.predict_matrix)
 
 
+class PredictDataset2(Dataset):
+    def __init__(self, datapath):
+        data = np.load(datapath, allow_pickle=True)
+        feature_positions = data.files
+        self.data = data
+        self.feature_positions = feature_positions
+
+    def __getitem__(self, i):
+        feature_pos = self.feature_positions[i]
+        feature_matrix = self.data[feature_pos]  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        return feature_pos, feature_matrix
+
+    def __len__(self):
+        return len(self.feature_positions)
+
+
+def train_pad_collate(batch):
+    # Separate data and labels
+    data, labels = zip(*batch)
+
+    # Find the max depth in the batch
+    max_depth = max([x.shape[1] for x in data])
+
+    # Pad sequences to the same depth
+    padded_data = []
+    for x in data:
+        depth_padding = max_depth - x.shape[1]
+        padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
+        padded_data.append(padded_x)
+
+    # Stack them into a tensor
+    padded_data = torch.stack(padded_data)
+    labels = torch.tensor(labels)
+
+    return padded_data, labels
+
+
+def eval_pad_collate(batch):
+    # Separate data and labels
+    pos, data, labels = zip(*batch)
+
+    # Find the max depth in the batch
+    max_depth = max([x.shape[1] for x in data])
+
+    # Pad sequences to the same depth
+    padded_data = []
+    for x in data:
+        depth_padding = max_depth - x.shape[1]
+        padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
+        padded_data.append(padded_x)
+
+    # Stack them into a tensor
+    padded_data = torch.stack(padded_data)
+    labels = torch.tensor(labels)
+
+    return pos, padded_data, labels
+
+
+def predict_pad_collate(batch):
+    # Separate data and labels
+    pos, data = zip(*batch)
+
+    # Find the max depth in the batch
+    max_depth = max([x.shape[1] for x in data])
+
+    # Pad sequences to the same depth
+    padded_data = []
+    for x in data:
+        depth_padding = max_depth - x.shape[1]
+        padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
+        padded_data.append(padded_x)
+
+    # Stack them into a tensor
+    padded_data = torch.stack(padded_data)
+
+    return pos, padded_data
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-data', required=True, help='directory of bin files')
     opt = parser.parse_args()
 
     epoch = 0
-    filepaths = [opt.data + '/' + file for file in os.listdir(opt.data)]
-    dataset = TrainDataset(data_paths=filepaths, flanking_size=20)
-    while epoch < 1:
-        dl = DataLoader(dataset, batch_size=500, shuffle=True)
-        for batch in dl:
-            feature_matrices, labels = batch
-            print("Epoch ", epoch, ":", feature_matrices.shape)
-        epoch += 1
+    # filepaths = [opt.data + '/' + file for file in os.listdir(opt.data) if file.endswith('.npz')]
+    # for file in filepaths:
+    #     dataset = TrainDataset2(datapath=file)
+    #     while epoch < 1:
+    #         dl = DataLoader(dataset, batch_size=500, shuffle=True, collate_fn=train_pad_collate)
+    #         for batch in dl:
+    #             feature_matrices, labels = batch
+    #             print("Epoch ", epoch, ":", feature_matrices.shape)
+    #         epoch += 1
 
-    """
-    filepaths = [opt.data + '/' + file for file in os.listdir(opt.data)]
-    dataset = PredictDataset(data_paths=filepaths, flanking_size=20)
-    while epoch < 10:
-        dl = DataLoader(dataset, batch_size=2000, shuffle=False)
-        for batch in dl:
-            positions, feature_matrices = batch
-            print("Epoch ", epoch, ":", feature_matrices.shape)
-        epoch += 1
-    """
+
+    # filepaths = [opt.data + '/' + file for file in os.listdir(opt.data) if file.endswith('.npz')]
+    # for file in filepaths:
+    #     dataset = EvalDataset2(datapath=file)
+    #     while epoch < 1:
+    #         dl = DataLoader(dataset, batch_size=100, shuffle=False, collate_fn=eval_pad_collate)
+    #         for batch in dl:
+    #             positions, feature_matrices, labels = batch
+    #             print("Epoch ", epoch, ":", feature_matrices.shape)
+    #         epoch += 1
+
+    filepaths = [opt.data + '/' + file for file in os.listdir(opt.data) if file.endswith('.npz')]
+    for file in filepaths:
+        dataset = PredictDataset2(datapath=file)
+        while epoch < 1:
+            dl = DataLoader(dataset, batch_size=100, shuffle=False, collate_fn=predict_pad_collate)
+            for batch in dl:
+                positions, feature_matrices = batch
+                print("Epoch ", epoch, ":", feature_matrices.shape)
+            epoch += 1
+

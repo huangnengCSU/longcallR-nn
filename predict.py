@@ -5,8 +5,8 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from math import log, e
-from nn import LSTMNetwork
-from dataset import PredictDataset
+from nn import LSTMNetwork, ResNetwork
+from dataset import PredictDataset2, predict_pad_collate
 from utils import AttrDict
 
 
@@ -49,8 +49,35 @@ def predict(model, test_dataset, batch_size, output_file, device):
         ## position, zygosity, quality
         for i in range(len(positions)):
             fout.write(
-                positions[i] + ',' + str(zy_output[i]) + ',' + str(zy_qual[i]) + ',' + str(zy_output_[i][0]) + ',' + str(
+                positions[i] + ',' + str(zy_output[i]) + ',' + str(zy_qual[i]) + ',' + str(
+                    zy_output_[i][0]) + ',' + str(
                     zy_output_[i][1]) + ',' + str(zy_output_[i][2]) + ',' + str(zy_output_[i][3]) + '\n')
+    fout.close()
+
+
+def predict2(model, test_paths, batch_size, output_file, device):
+    model.eval()
+    fout = open(output_file, 'w')
+    for file in test_paths:
+        test_dataset = PredictDataset2(file)
+        dl = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, collate_fn=predict_pad_collate)
+        for batch in dl:
+            positions, feature_matrices = batch
+            feature_tensor = feature_matrices.type(torch.FloatTensor).to(device)
+            feature_tensor = feature_tensor.permute(0, 3, 1, 2)  # [batch, dim, L, W]
+            zy_output_ = model.predict(feature_tensor)
+            zy_output_ = zy_output_.detach().cpu().numpy()
+            zy_prob = np.max(zy_output_, axis=1)  # [N]
+            zy_output = np.argmax(zy_output_, axis=1)  # [N]
+            zy_qual = calculate_phred_scores(1 - zy_prob)
+
+            ## write to csv file
+            ## position, zygosity, quality
+            for i in range(len(positions)):
+                fout.write(
+                    positions[i] + ',' + str(zy_output[i]) + ',' + str(zy_qual[i]) + ',' + str(
+                        zy_output_[i][0]) + ',' + str(
+                        zy_output_[i][1]) + ',' + str(zy_output_[i][2]) + ',' + str(zy_output_[i][3]) + '\n')
     fout.close()
 
 
@@ -67,13 +94,13 @@ def main():
     device = torch.device('cuda' if not opt.no_cuda else 'cpu')
     configfile = open(opt.config)
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
-    pred_model = LSTMNetwork(config.model).to(device)
+    pred_model = ResNetwork(config.model).to(device)
     checkpoint = torch.load(opt.model_path, map_location=device)
     pred_model.encoder.load_state_dict(checkpoint['encoder'])
     pred_model.forward_layer.load_state_dict(checkpoint['forward_layer'])
-    testing_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data)]
-    predict_dataset = PredictDataset(testing_paths, config.data.flanking_size)
-    predict(pred_model, predict_dataset, opt.batch_size, opt.output, device)
+    testing_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npy')]
+    # predict_dataset = PredictDataset(testing_paths, config.data.flanking_size)
+    predict(pred_model, testing_paths, opt.batch_size, opt.output, device)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
-import torch.nn as nn
 import torch
+import torch.nn as nn
+import torchvision.models as models
 from optim import LabelSmoothingLoss
 
 
@@ -96,5 +97,27 @@ class LSTMNetwork(nn.Module):
     def predict(self, inputs):
         enc_state, _ = self.encoder(inputs)  # [N, L, o]
         zy_logits = self.forward_layer(enc_state)
+        zy_logits = torch.softmax(zy_logits, 1)
+        return zy_logits
+
+
+class ResNetwork(nn.Module):
+    def __init__(self, config):
+        super(ResNetwork, self).__init__()
+        self.config = config
+        self.resnet18 = models.resnet18(pretrained=False)
+        self.resnet18.conv1 = nn.Conv2d(7, 64, kernel_size=7, stride=2, padding=3, bias=False)  # change input channel
+        self.resnet18.fc = nn.Linear(self.resnet18.fc.in_features, config.num_class, bias=True)  # change output class
+        self.zy_crit = LabelSmoothingLoss(config.num_class, 0.1)
+
+    def forward(self, inputs, zy_target):
+        zy_logits = self.resnet18(inputs)
+        zy_loss = self.zy_crit(zy_logits.contiguous().view(-1, self.config.num_class),
+                               zy_target.contiguous().view(-1))
+        loss = zy_loss
+        return loss, zy_logits
+
+    def predict(self, inputs):
+        zy_logits = self.resnet18(inputs)
         zy_logits = torch.softmax(zy_logits, 1)
         return zy_logits

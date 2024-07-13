@@ -6,7 +6,7 @@ import numpy as np
 from torch.utils.data import DataLoader
 from math import log, e
 from nn import LSTMNetwork
-from dataset import EvalDataset
+from dataset import EvalDataset2, eval_pad_collate
 from utils import AttrDict
 
 
@@ -33,7 +33,7 @@ def calculate_phred_scores(probs):
 
 def eval(model, eval_dataset, batch_size, output_file, device):
     model.eval()
-    dl = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+    dl = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, collate_fn=eval_pad_collate)
     fout = open(output_file, 'w')
     for batch in dl:
         positions, feature_matrices, labels = batch
@@ -49,9 +49,38 @@ def eval(model, eval_dataset, batch_size, output_file, device):
         ## position, zygosity, quality
         for i in range(len(positions)):
             if zy_output[i] != labels[i]:
-                fout.write(positions[i] + ',' + str(labels[i].item()) + ',' + str(zy_output[i]) + ',' + str(zy_qual[i]) + ','
-                           + str(zy_output_[i][0]) + ',' + str(zy_output_[i][1]) + ',' + str(zy_output_[i][2]) + ','
-                           + str(zy_output_[i][3]) + '\n')
+                fout.write(
+                    positions[i] + ',' + str(labels[i].item()) + ',' + str(zy_output[i]) + ',' + str(zy_qual[i]) + ','
+                    + str(zy_output_[i][0]) + ',' + str(zy_output_[i][1]) + ',' + str(zy_output_[i][2]) + ','
+                    + str(zy_output_[i][3]) + '\n')
+    fout.close()
+
+
+def eval2(model, eval_paths, batch_size, output_file, device):
+    model.eval()
+    fout = open(output_file, 'w')
+    for file in eval_paths:
+        eval_dataset = EvalDataset2(file)
+        dl = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+        for batch in dl:
+            positions, feature_matrices, labels = batch
+            feature_tensor = feature_matrices.type(torch.FloatTensor).to(device)
+            feature_tensor = feature_tensor.permute(0, 3, 1, 2)  # [batch, ndim, L, W]
+
+            zy_output_ = model.predict(feature_tensor)
+            zy_output_ = zy_output_.detach().cpu().numpy()
+            zy_prob = np.max(zy_output_, axis=1)  # [N]
+            zy_output = np.argmax(zy_output_, axis=1)  # [N]
+            zy_qual = calculate_phred_scores(1 - zy_prob)
+
+            ## write to csv file
+            ## position, zygosity, quality
+            for i in range(len(positions)):
+                if zy_output[i] != labels[i]:
+                    fout.write(positions[i] + ',' + str(labels[i].item()) + ',' + str(zy_output[i]) + ',' + str(
+                        zy_qual[i]) + ','
+                               + str(zy_output_[i][0]) + ',' + str(zy_output_[i][1]) + ',' + str(zy_output_[i][2]) + ','
+                               + str(zy_output_[i][3]) + '\n')
     fout.close()
 
 
@@ -72,9 +101,9 @@ def main():
     checkpoint = torch.load(opt.model_path, map_location=device)
     pred_model.encoder.load_state_dict(checkpoint['encoder'])
     pred_model.forward_layer.load_state_dict(checkpoint['forward_layer'])
-    eval_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data)]
-    eval_dataset = EvalDataset(eval_paths, config.data.flanking_size)
-    eval(pred_model, eval_dataset, opt.batch_size, opt.output, device)
+    eval_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npy')]
+    # eval_dataset = EvalDataset(eval_paths, config.data.flanking_size)
+    eval2(pred_model, eval_paths, opt.batch_size, opt.output, device)
 
 
 if __name__ == '__main__':

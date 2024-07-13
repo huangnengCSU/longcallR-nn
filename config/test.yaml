@@ -1,8 +1,8 @@
 configname: test_pileup
 data:
   flanking_size: 20
-  train: "hg002_isoseq_chr20_train_dataset"
-  dev: "hg002_isoseq_chr19_train_dataset"
+  train: "hg002_isoseq_chr20_train_images"
+  dev: "hg002_isoseq_chr19_train_images"
   test: "None"
 model:
   enc:
@@ -14,7 +14,7 @@ model:
   joint:
     inner_size: 256
   feature_dim: 26
-  num_class: 4
+  num_class: 5
   dropout: 0.3
 training:
   batch_size: 16
