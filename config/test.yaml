@@ -1,8 +1,8 @@
-configname: test
+configname: test_pileup
 data:
   flanking_size: 20
-  train: "train_dataset"
-  dev: "validate_dataset"
+  train: "hg002_isoseq_chr20_train_dataset"
+  dev: "hg002_isoseq_chr19_train_dataset"
   test: "None"
 model:
   enc:
@@ -13,11 +13,11 @@ model:
     bidirectional: True
   joint:
     inner_size: 256
-  feature_dim: 38
+  feature_dim: 26
   num_class: 4
   dropout: 0.3
 training:
-  batch_size: 200
+  batch_size: 16
   use_balance: False
   validate_use_balance: False
   load_model: False
@@ -28,7 +28,7 @@ training:
   epochs: 200
   max_grad_norm: 20
   visualization: True
-  save_model: test
+  save_model: test_pileup
 optim:
   type: LookaheadAdam
   lr: 0.001
