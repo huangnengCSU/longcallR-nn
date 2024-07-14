@@ -96,11 +96,10 @@ def main():
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
     pred_model = ResNetwork(config.model).to(device)
     checkpoint = torch.load(opt.model_path, map_location=device)
-    pred_model.encoder.load_state_dict(checkpoint['encoder'])
-    pred_model.forward_layer.load_state_dict(checkpoint['forward_layer'])
-    testing_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npy')]
+    pred_model.resnet18.load_state_dict(checkpoint['resnet18'])
+    testing_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
     # predict_dataset = PredictDataset(testing_paths, config.data.flanking_size)
-    predict(pred_model, testing_paths, opt.batch_size, opt.output, device)
+    predict2(pred_model, testing_paths, opt.batch_size, opt.output, device)
 
 
 if __name__ == '__main__':

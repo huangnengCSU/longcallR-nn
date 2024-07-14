@@ -10,7 +10,7 @@ import numpy as np
 from nn import LSTMNetwork, ResNetwork
 from dataset import TrainDataset2, train_pad_collate
 from optim import Optimizer, build_optimizer
-from utils import AttrDict, init_logger, count_parameters, save_model
+from utils import AttrDict, init_logger, count_parameters, save_model2
 from tensorboardX import SummaryWriter
 from torchmetrics import Accuracy, Recall, Precision, F1Score, ConfusionMatrix
 
@@ -267,6 +267,8 @@ def main():
         visualizer = None
 
     for epoch in range(start_epoch, config.training.epochs):
+        save_name = os.path.join(exp_name, '%s.epoch%d.chkpt' % (config.training.save_model, epoch))
+        save_model2(model, optimizer, config, save_name)
         if epoch == config.training.first_stage:
             # freeze encoder params
             for param in model.encoder.parameters():
@@ -282,7 +284,7 @@ def main():
             eval2(epoch, config, model, validating_paths, config.training.batch_size, logger, dev_visualizer)
 
         save_name = os.path.join(exp_name, '%s.epoch%d.chkpt' % (config.training.save_model, epoch))
-        save_model(model, optimizer, config, save_name)
+        save_model2(model, optimizer, config, save_name)
         logger.info('Epoch %d model has been saved.' % epoch)
 
         if epoch >= config.optim.begin_to_adjust_lr:
