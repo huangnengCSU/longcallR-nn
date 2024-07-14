@@ -154,9 +154,16 @@ class TrainDataset(Dataset):
 
 
 class TrainDataset2(Dataset):
-    def __init__(self, datapath):
-        data = np.load(datapath, allow_pickle=True)
+    def __init__(self, datapath, max_depth=1000):
+        data = np.load(datapath)
         feature_positions = data.files
+
+        ## filter out the data with depth > max_depth
+        indices = []
+        for i, feature_pos in enumerate(feature_positions):
+            if data[feature_pos].shape[1] <= max_depth:
+                indices.append(i)
+
         labelpath = os.path.splitext(datapath)[0] + '.label'
         label_positions = []
         labels = []
@@ -165,6 +172,11 @@ class TrainDataset2(Dataset):
                 fields = line.strip().split('\t')
                 labels.append(int(fields[0]))
                 label_positions.append(fields[1])
+
+        feature_positions = [feature_positions[i] for i in indices]
+        labels = [labels[i] for i in indices]
+        label_positions = [label_positions[i] for i in indices]
+
         self.data = data
         self.feature_positions = feature_positions
         self.labels = labels
@@ -221,9 +233,16 @@ class EvalDataset(Dataset):
 
 
 class EvalDataset2(Dataset):
-    def __init__(self, datapath):
-        data = np.load(datapath, allow_pickle=True)
+    def __init__(self, datapath, max_depth=1000):
+        data = np.load(datapath)
         feature_positions = data.files
+
+        ## filter out the data with depth > max_depth
+        indices = []
+        for i, feature_pos in enumerate(feature_positions):
+            if data[feature_pos].shape[1] <= max_depth:
+                indices.append(i)
+
         labelpath = os.path.splitext(datapath)[0] + '.label'
         label_positions = []
         labels = []
@@ -232,6 +251,11 @@ class EvalDataset2(Dataset):
                 fields = line.strip().split('\t')
                 labels.append(int(fields[0]))
                 label_positions.append(fields[1])
+
+        feature_positions = [feature_positions[i] for i in indices]
+        labels = [labels[i] for i in indices]
+        label_positions = [label_positions[i] for i in indices]
+
         self.data = data
         self.feature_positions = feature_positions
         self.labels = labels
@@ -318,7 +342,7 @@ class PredictDataset(Dataset):
 
 class PredictDataset2(Dataset):
     def __init__(self, datapath):
-        data = np.load(datapath, allow_pickle=True)
+        data = np.load(datapath)
         feature_positions = data.files
         self.data = data
         self.feature_positions = feature_positions
