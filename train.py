@@ -266,8 +266,6 @@ def main():
         visualizer = None
 
     for epoch in range(start_epoch, config.training.epochs):
-        save_name = os.path.join(exp_name, '%s.epoch%d.chkpt' % (config.training.save_model, epoch))
-        save_model2(model, optimizer, config, save_name)
         if epoch == config.training.first_stage:
             # freeze encoder params
             for param in model.encoder.parameters():
