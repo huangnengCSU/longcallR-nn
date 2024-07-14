@@ -79,7 +79,6 @@ def train2(epoch, config, model, train_paths, batch_size, optimizer, logger, vis
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
     for file in train_paths:
         train_dataset = TrainDataset2(file)
-        print(file)
         dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=train_pad_collate)
         for batch in dl:
             feature_tensor, zygosity_label = batch

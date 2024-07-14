@@ -105,7 +105,7 @@ class ResNetwork(nn.Module):
     def __init__(self, config):
         super(ResNetwork, self).__init__()
         self.config = config
-        self.resnet18 = models.resnet18(pretrained=False)
+        self.resnet18 = models.resnet18(pretrained=True)
         self.resnet18.conv1 = nn.Conv2d(7, 64, kernel_size=7, stride=2, padding=3, bias=False)  # change input channel
         self.resnet18.fc = nn.Linear(self.resnet18.fc.in_features, config.num_class, bias=True)  # change output class
         self.zy_crit = LabelSmoothingLoss(config.num_class, 0.1)
