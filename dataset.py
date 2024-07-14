@@ -332,12 +332,12 @@ class PredictDataset2(Dataset):
         return len(self.feature_positions)
 
 
-def train_pad_collate(batch):
+def train_pad_collate(batch, max_depth_threshold=10000):
     # Separate data and labels
     data, labels = zip(*batch)
 
     # Find the max depth in the batch
-    max_depth = max([x.shape[1] for x in data])
+    max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
 
     # Pad sequences to the same depth
     padded_data = []
@@ -353,12 +353,12 @@ def train_pad_collate(batch):
     return padded_data, labels
 
 
-def eval_pad_collate(batch):
+def eval_pad_collate(batch, max_depth_threshold=10000):
     # Separate data and labels
     pos, data, labels = zip(*batch)
 
     # Find the max depth in the batch
-    max_depth = max([x.shape[1] for x in data])
+    max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
 
     # Pad sequences to the same depth
     padded_data = []
@@ -374,12 +374,12 @@ def eval_pad_collate(batch):
     return pos, padded_data, labels
 
 
-def predict_pad_collate(batch):
+def predict_pad_collate(batch, max_depth_threshold=10000):
     # Separate data and labels
     pos, data = zip(*batch)
 
     # Find the max depth in the batch
-    max_depth = max([x.shape[1] for x in data])
+    max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
 
     # Pad sequences to the same depth
     padded_data = []
@@ -410,7 +410,6 @@ if __name__ == '__main__':
     #             print("Epoch ", epoch, ":", feature_matrices.shape)
     #         epoch += 1
 
-
     # filepaths = [opt.data + '/' + file for file in os.listdir(opt.data) if file.endswith('.npz')]
     # for file in filepaths:
     #     dataset = EvalDataset2(datapath=file)
@@ -430,4 +429,3 @@ if __name__ == '__main__':
                 positions, feature_matrices = batch
                 print("Epoch ", epoch, ":", feature_matrices.shape)
             epoch += 1
-
