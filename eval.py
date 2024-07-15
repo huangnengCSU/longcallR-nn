@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from math import log, e
-from nn import LSTMNetwork
+from nn import ResNetwork
 from dataset import EvalDataset2, eval_pad_collate
 from utils import AttrDict
 
@@ -97,7 +97,7 @@ def main():
     device = torch.device('cuda' if not opt.no_cuda else 'cpu')
     configfile = open(opt.config)
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
-    pred_model = LSTMNetwork(config.model).to(device)
+    pred_model = ResNetwork(config.model).to(device)
     checkpoint = torch.load(opt.model_path, map_location=device)
     pred_model.resnet18.load_state_dict(checkpoint['resnet18'])
     eval_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
