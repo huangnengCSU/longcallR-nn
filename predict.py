@@ -87,7 +87,7 @@ def predict2(model, test_paths, batch_size, output_file, device):
                 elif zy_output[i] == 3:
                     gt = "1/2"
                 qual = zy_qual[i]
-                if gt == 1 or gt == 2 or gt == 3:
+                if zy_output[i] == 1 or zy_output[i] == 2 or zy_output[i] == 3:
                     fout.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
                         chr, pos, '.', 'N', 'N', qual, 'PASS', '.', 'GT', gt))
     fout.close()
