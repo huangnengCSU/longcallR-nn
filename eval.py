@@ -33,7 +33,7 @@ def calculate_phred_scores(probs):
 
 def eval(model, eval_dataset, batch_size, output_file, device):
     model.eval()
-    dl = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, collate_fn=eval_pad_collate)
+    dl = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
     fout = open(output_file, 'w')
     for batch in dl:
         positions, feature_matrices, labels = batch
@@ -61,7 +61,7 @@ def eval2(model, eval_paths, batch_size, output_file, device):
     fout = open(output_file, 'w')
     for file in eval_paths:
         eval_dataset = EvalDataset2(file)
-        dl = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+        dl = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, collate_fn=eval_pad_collate)
         for batch in dl:
             positions, feature_matrices, labels = batch
             feature_tensor = feature_matrices.type(torch.FloatTensor).to(device)
