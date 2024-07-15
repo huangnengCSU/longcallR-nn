@@ -78,7 +78,7 @@ def train2(epoch, config, model, train_paths, batch_size, optimizer, logger, vis
     zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
     for file in train_paths:
-        train_dataset = TrainDataset2(file)
+        train_dataset = TrainDataset2(file, 200)
         dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=train_pad_collate)
         for batch in dl:
             feature_tensor, zygosity_label = batch
@@ -160,7 +160,7 @@ def eval2(epoch, config, model, validate_paths, batch_size, logger, visualizer=N
     zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
     for file in validate_paths:
-        validate_dataset = TrainDataset2(file)
+        validate_dataset = TrainDataset2(file, 200)
         dl = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=train_pad_collate)
         for batch in dl:
             feature_tensor, zygosity_label = batch
