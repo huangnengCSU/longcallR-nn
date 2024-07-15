@@ -91,7 +91,7 @@ def main():
     parser.add_argument('-data', required=True, help='directory of feature files')
     # parser.add_argument('-contig', required=True, help='contig name of the input bin files')
     parser.add_argument('-output', required=True, help='output vcf file')
-    parser.add_argument('-batch_size', type=int, default=1000, help='batch size')
+    parser.add_argument('-batch_size', type=int, default=10, help='batch size')
     parser.add_argument('--no_cuda', action="store_true", help='If running on cpu device, set the argument.')
     opt = parser.parse_args()
     device = torch.device('cuda' if not opt.no_cuda else 'cpu')
