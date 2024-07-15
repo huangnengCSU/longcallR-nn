@@ -1,8 +1,8 @@
 configname: test_pileup
 data:
   flanking_size: 20
-  train: "hg002_isoseq_chr20_train_images"
-  dev: "hg002_isoseq_chr19_train_images"
+  train: "/Users/nh661/projs/rna_snps/longcallR-dp/debug/hg002_isoseq_chr20_train_images"
+  dev: "/Users/nh661/projs/rna_snps/longcallR-dp/debug/hg002_isoseq_chr19_train_images"
   test: "None"
 model:
   enc:
@@ -17,7 +17,7 @@ model:
   num_class: 5
   dropout: 0.3
 training:
-  batch_size: 16
+  batch_size: 10
   use_balance: False
   validate_use_balance: False
   load_model: False
