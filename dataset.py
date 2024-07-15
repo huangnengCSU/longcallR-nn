@@ -388,12 +388,31 @@ def eval_pad_collate(batch, max_depth_threshold=10000):
     return pos, padded_data, labels
 
 
-def predict_pad_collate(batch, max_depth_threshold=10000):
+# def predict_pad_collate(batch, max_depth_threshold=10000):
+#     # Separate data and labels
+#     pos, data = zip(*batch)
+#
+#     # Find the max depth in the batch
+#     max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
+#
+#     # Pad sequences to the same depth
+#     padded_data = []
+#     for x in data:
+#         depth_padding = max_depth - x.shape[1]
+#         padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
+#         padded_data.append(padded_x)
+#
+#     # Stack them into a tensor
+#     padded_data = torch.stack(padded_data)
+#
+#     return pos, padded_data
+
+def predict_pad_collate(batch):
     # Separate data and labels
     pos, data = zip(*batch)
 
     # Find the max depth in the batch
-    max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
+    max_depth = max([x.shape[1] for x in data])
 
     # Pad sequences to the same depth
     padded_data = []
