@@ -5,9 +5,10 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from math import log, e
-from nn import LSTMNetwork, ResNetwork
+from nn import ResNetwork
 from dataset import PredictDataset2, predict_pad_collate
 from utils import AttrDict
+from vcf import write_vcf_header
 
 
 def calculate_score(probability):
@@ -57,7 +58,8 @@ def predict(model, test_dataset, batch_size, output_file, device):
 
 def predict2(model, test_paths, batch_size, output_file, device):
     model.eval()
-    fout = open(output_file, 'w')
+    write_vcf_header(output_file)
+    fout = open(output_file, 'a')
     for file in test_paths:
         test_dataset = PredictDataset2(file)
         dl = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, collate_fn=predict_pad_collate)
@@ -71,13 +73,23 @@ def predict2(model, test_paths, batch_size, output_file, device):
             zy_output = np.argmax(zy_output_, axis=1)  # [N]
             zy_qual = calculate_phred_scores(1 - zy_prob)
 
-            ## write to csv file
+            ## write to vcf file
             ## position, zygosity, quality
             for i in range(len(positions)):
-                fout.write(
-                    positions[i] + ',' + str(zy_output[i]) + ',' + str(zy_qual[i]) + ',' + str(
-                        zy_output_[i][0]) + ',' + str(
-                        zy_output_[i][1]) + ',' + str(zy_output_[i][2]) + ',' + str(zy_output_[i][3]) + '\n')
+                chr = positions[i].split(':')[0]
+                pos = positions[i].split(':')[1]
+                if zy_output[i] == 0:
+                    gt = "0/0"
+                elif zy_output[i] == 1:
+                    gt = "0/1"
+                elif zy_output[i] == 2:
+                    gt = "1/1"
+                elif zy_output[i] == 3:
+                    gt = "1/2"
+                qual = zy_qual[i]
+                if gt == 1 or gt == 2 or gt == 3:
+                    fout.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
+                        chr, pos, '.', 'N', 'N', qual, 'PASS', '.', 'GT', gt))
     fout.close()
 
 
