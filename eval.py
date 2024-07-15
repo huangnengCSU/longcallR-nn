@@ -27,7 +27,7 @@ def calculate_phred_scores(probs):
     np.ndarray: An array of Phred quality scores.
     """
     # Convert probabilities to Phred scores using the formula Q = -10 * log10(P)
-    phred_scores = -10 * np.log10(probs)
+    phred_scores = -10 * np.log10(probs + 1e-300)
     return phred_scores
 
 
