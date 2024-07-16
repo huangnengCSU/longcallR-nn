@@ -194,6 +194,59 @@ class TrainDataset2(Dataset):
         return len(self.labels)
 
 
+class TrainDataset3(Dataset):
+    def __init__(self, data_folder, max_depth=1000):
+
+        all_data = {}
+        all_feature_positions = []
+        all_labels = []
+        all_label_positions = []
+
+        for fn in os.listdir(data_folder):
+            if not fn.endswith('.npz'):
+                continue
+            datapath = data_folder + '/' + fn
+            data = np.load(datapath)
+            feature_positions = data.files
+
+            ## filter out the data with depth > max_depth
+            indices = []
+            for i, feature_pos in enumerate(feature_positions):
+                if data[feature_pos].shape[1] <= max_depth:
+                    indices.append(i)
+
+            labelpath = os.path.splitext(datapath)[0] + '.label'
+            label_positions = []
+            labels = []
+            with open(labelpath, 'r') as fin:
+                for line in fin:
+                    fields = line.strip().split('\t')
+                    labels.append(int(fields[0]))
+                    label_positions.append(fields[1])
+
+            all_feature_positions.extend([feature_positions[i] for i in indices])
+            all_labels.extend([labels[i] for i in indices])
+            all_label_positions.extend([label_positions[i] for i in indices])
+            for i in indices:
+                all_data[feature_positions[i]] = data[feature_positions[i]]
+
+        self.data = all_data
+        self.feature_positions = all_feature_positions
+        self.labels = all_labels
+        self.label_positions = all_label_positions
+
+    def __getitem__(self, i):
+        feature_pos = self.feature_positions[i]
+        feature_matrix = self.data[feature_pos]  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        label_pos = self.label_positions[i]
+        label = self.labels[i]
+        assert feature_pos == label_pos
+        return feature_matrix, label
+
+    def __len__(self):
+        return len(self.labels)
+
+
 class EvalDataset(Dataset):
     def __init__(self, data_paths, flanking_size):
         ## data_paths: list of file paths
@@ -453,12 +506,20 @@ if __name__ == '__main__':
     #             print("Epoch ", epoch, ":", feature_matrices.shape)
     #         epoch += 1
 
-    filepaths = [opt.data + '/' + file for file in os.listdir(opt.data) if file.endswith('.npz')]
-    for file in filepaths:
-        dataset = PredictDataset2(datapath=file)
-        while epoch < 1:
-            dl = DataLoader(dataset, batch_size=100, shuffle=False, collate_fn=predict_pad_collate)
-            for batch in dl:
-                positions, feature_matrices = batch
-                print("Epoch ", epoch, ":", feature_matrices.shape)
-            epoch += 1
+    # filepaths = [opt.data + '/' + file for file in os.listdir(opt.data) if file.endswith('.npz')]
+    # for file in filepaths:
+    #     dataset = PredictDataset2(datapath=file)
+    #     while epoch < 1:
+    #         dl = DataLoader(dataset, batch_size=100, shuffle=False, collate_fn=predict_pad_collate)
+    #         for batch in dl:
+    #             positions, feature_matrices = batch
+    #             print("Epoch ", epoch, ":", feature_matrices.shape)
+    #         epoch += 1
+
+    dataset = TrainDataset3(data_folder=opt.data, max_depth=200)
+    while epoch < 2:
+        dl = DataLoader(dataset, batch_size=100, shuffle=True, collate_fn=train_pad_collate)
+        for batch in dl:
+            feature_matrices, labels = batch
+            print("Epoch ", epoch, ":", feature_matrices.shape)
+        epoch += 1
