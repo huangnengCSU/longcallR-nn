@@ -80,7 +80,7 @@ def save_model(model, optimizer, config, save_name):
 def save_model2(model, optimizer, config, save_name):
     multi_gpu = True if config.training.num_gpu > 1 else False
     checkpoint = {
-        'resnet18': model.module.resnet18.state_dict() if multi_gpu else model.resnet18.state_dict(),
+        'resnet': model.module.resnet.state_dict() if multi_gpu else model.resnet.state_dict(),
         'optimizer': optimizer.state_dict(),
         'epoch': optimizer.current_epoch,
         'step': optimizer.global_step

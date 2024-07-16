@@ -99,7 +99,7 @@ def main():
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
     pred_model = ResNetwork(config.model).to(device)
     checkpoint = torch.load(opt.model_path, map_location=device)
-    pred_model.resnet18.load_state_dict(checkpoint['resnet18'])
+    pred_model.resnet.load_state_dict(checkpoint['resnet'])
     eval_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
     # eval_dataset = EvalDataset(eval_paths, config.data.flanking_size)
     eval2(pred_model, eval_paths, opt.batch_size, opt.output, device)

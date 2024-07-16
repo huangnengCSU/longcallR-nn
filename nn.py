@@ -105,19 +105,30 @@ class ResNetwork(nn.Module):
     def __init__(self, config):
         super(ResNetwork, self).__init__()
         self.config = config
-        self.resnet18 = models.resnet18(pretrained=True)
-        self.resnet18.conv1 = nn.Conv2d(7, 64, kernel_size=7, stride=2, padding=3, bias=False)  # change input channel
-        self.resnet18.fc = nn.Linear(self.resnet18.fc.in_features, config.num_class, bias=True)  # change output class
+        if config.model_name == 'resnet18':
+            self.resnet = models.resnet18(pretrained=True)
+        elif config.model_name == 'resnet34':
+            self.resnet = models.resnet34(pretrained=True)
+        elif config.model_name == 'resnet50':
+            self.resnet = models.resnet50(pretrained=True)
+        elif config.model_name == 'resnet101':
+            self.resnet = models.resnet101(pretrained=True)
+        elif config.model_name == 'resnet152':
+            self.resnet = models.resnet152(pretrained=True)
+        else:
+            raise ValueError("Unexpected model name")
+        self.resnet.conv1 = nn.Conv2d(7, 64, kernel_size=7, stride=2, padding=3, bias=False)  # change input channel
+        self.resnet.fc = nn.Linear(self.resnet.fc.in_features, config.num_class, bias=True)  # change output class
         self.zy_crit = LabelSmoothingLoss(config.num_class, 0.1)
 
     def forward(self, inputs, zy_target):
-        zy_logits = self.resnet18(inputs)
+        zy_logits = self.resnet(inputs)
         zy_loss = self.zy_crit(zy_logits.contiguous().view(-1, self.config.num_class),
                                zy_target.contiguous().view(-1))
         loss = zy_loss
         return loss, zy_logits
 
     def predict(self, inputs):
-        zy_logits = self.resnet18(inputs)
+        zy_logits = self.resnet(inputs)
         zy_logits = torch.softmax(zy_logits, 1)
         return zy_logits
