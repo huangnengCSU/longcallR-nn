@@ -237,14 +237,13 @@ def eval2(epoch, config, model, validate_paths, batch_size, logger, visualizer=N
     print(zy_conf_metric.compute())
 
 
-def eval3(epoch, config, model, validate_folder, batch_size, logger, visualizer=None):
+def eval3(epoch, config, model, validate_dataset, batch_size, logger, visualizer=None):
     model.eval()
     total_loss = 0
     total_images = 0
     zy_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_class)
     zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
-    validate_dataset = TrainDataset2(validate_folder, 200)
     dl = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=train_pad_collate)
     for batch in dl:
         feature_tensor, zygosity_label = batch
