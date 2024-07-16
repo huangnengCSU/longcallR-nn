@@ -298,8 +298,10 @@ def main():
     if config.data.dev != "None":
         # training_paths = [config.data.train + '/' + fn for fn in os.listdir(config.data.train) if fn.endswith('.npz')]
         # validating_paths = [config.data.dev + '/' + fn for fn in os.listdir(config.data.dev) if fn.endswith('.npz')]
-        training_dataset = TrainDataset3(config.data.train, 200)
         validating_dataset = TrainDataset3(config.data.dev, 200)
+        logger.info("Load validating dataset from %s" % config.data.dev)
+        training_dataset = TrainDataset3(config.data.train, 200)
+        logger.info("Load training dataset from %s" % config.data.train)
         # train_dataset = TrainDataset(training_paths, config.data.flanking_size)
         # validate_dataset = TrainDataset(validating_paths, config.data.flanking_size)
     else:
