@@ -106,15 +106,30 @@ class ResNetwork(nn.Module):
         super(ResNetwork, self).__init__()
         self.config = config
         if config.model_name == 'resnet18':
-            self.resnet = models.resnet18(pretrained=True)
+            if config.pretrained:
+                self.resnet = models.resnet18(pretrained=True)
+            else:
+                self.resnet = models.resnet18(pretrained=False)
         elif config.model_name == 'resnet34':
-            self.resnet = models.resnet34(pretrained=True)
+            if config.pretrained:
+                self.resnet = models.resnet34(pretrained=True)
+            else:
+                self.resnet = models.resnet34(pretrained=False)
         elif config.model_name == 'resnet50':
-            self.resnet = models.resnet50(pretrained=True)
+            if config.pretrained:
+                self.resnet = models.resnet50(pretrained=True)
+            else:
+                self.resnet = models.resnet50(pretrained=False)
         elif config.model_name == 'resnet101':
-            self.resnet = models.resnet101(pretrained=True)
+            if config.pretrained:
+                self.resnet = models.resnet101(pretrained=True)
+            else:
+                self.resnet = models.resnet101(pretrained=False)
         elif config.model_name == 'resnet152':
-            self.resnet = models.resnet152(pretrained=True)
+            if config.pretrained:
+                self.resnet = models.resnet152(pretrained=True)
+            else:
+                self.resnet = models.resnet152(pretrained=False)
         else:
             raise ValueError("Unexpected model name")
         self.resnet.conv1 = nn.Conv2d(7, 64, kernel_size=7, stride=2, padding=3, bias=False)  # change input channel
