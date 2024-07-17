@@ -1,6 +1,7 @@
 configname: test_pileup
 data:
   flanking_size: 20
+  max_depth: 200
   train: "hg002_isoseq_chr20_train_images"
   dev: "hg002_isoseq_chr19_train_images"
   test: "None"

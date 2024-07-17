@@ -78,7 +78,7 @@ def train2(epoch, config, model, train_paths, batch_size, optimizer, logger, vis
     zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
     for file in train_paths:
-        train_dataset = TrainDataset2(file, 200)
+        train_dataset = TrainDataset2(file, config.data.max_depth)
         dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=train_collate)
         for batch in dl:
             feature_tensor, zygosity_label = batch
@@ -205,7 +205,7 @@ def eval2(epoch, config, model, validate_paths, batch_size, logger, visualizer=N
     zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
     for file in validate_paths:
-        validate_dataset = TrainDataset2(file, 200)
+        validate_dataset = TrainDataset2(file, config.data.max_depth)
         dl = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=train_collate)
         for batch in dl:
             feature_tensor, zygosity_label = batch
@@ -297,9 +297,9 @@ def main():
     if config.data.dev != "None":
         # training_paths = [config.data.train + '/' + fn for fn in os.listdir(config.data.train) if fn.endswith('.npz')]
         # validating_paths = [config.data.dev + '/' + fn for fn in os.listdir(config.data.dev) if fn.endswith('.npz')]
-        validating_dataset = TrainDataset3(config.data.dev, 200)
+        validating_dataset = TrainDataset3(config.data.dev, config.data.max_depth)
         logger.info("Load validating dataset from %s" % config.data.dev)
-        training_dataset = TrainDataset3(config.data.train, 200)
+        training_dataset = TrainDataset3(config.data.train, config.data.max_depth)
         logger.info("Load training dataset from %s" % config.data.train)
         # train_dataset = TrainDataset(training_paths, config.data.flanking_size)
         # validate_dataset = TrainDataset(validating_paths, config.data.flanking_size)
