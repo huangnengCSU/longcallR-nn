@@ -128,6 +128,42 @@ def sort_allele(feature_matrix):
     return feature_matrix
 
 
+def downsample_indices_by_allele(center_allele_array, depth_threshold):
+    # Count occurrences of each allele
+    alleles, counts = np.unique(center_allele_array, return_counts=True)
+    allele_count_dict = dict(zip(alleles, counts))
+
+    # Ensure all alleles are in the dictionary
+    for allele in [0, 1, 2, 3, 4, 5, 6]:
+        if allele not in allele_count_dict:
+            allele_count_dict[allele] = 0
+
+    # Calculate the total counts for A, C, G, T
+    sum_acgt = sum(allele_count_dict[allele] for allele in [1, 2, 3, 4])
+
+    if sum_acgt <= depth_threshold:
+        # Include all A, C, G, T
+        selected_indices = np.where(np.isin(center_allele_array, [1, 2, 3, 4]))[0]
+
+        # Calculate remaining amount to reach depth_threshold
+        remaining_amount = depth_threshold - sum_acgt
+
+        # Collect N and D indices
+        n_d_indices = np.where(np.isin(center_allele_array, [0, 5, 6]))[0]
+
+        if remaining_amount > 0 and len(n_d_indices) > 0:
+            # Randomly select from N and D
+            selected_n_d_indices = np.random.choice(n_d_indices, min(remaining_amount, len(n_d_indices)), replace=False)
+            selected_indices = np.concatenate((selected_indices, selected_n_d_indices))
+
+    else:
+        # Randomly select depth_threshold from A, C, G, T
+        acgt_indices = np.where(np.isin(center_allele_array, [1, 2, 3, 4]))[0]
+        selected_indices = np.random.choice(acgt_indices, depth_threshold, replace=False)
+
+    return selected_indices
+
+
 class TrainDataset(Dataset):
     def __init__(self, data_paths, flanking_size):
         ## data_paths: list of file paths
@@ -422,9 +458,13 @@ def train_collate(batch, max_depth_threshold=2000):
     processed_data = []
     for x in data:
         depth = x.shape[1]
+        flank = int((x.shape[0] - 1) / 2)
+        center_allele_array = x[flank, :, 1]
+
         if depth > max_depth:
             # Random down-sampling to max_depth
-            indices = sorted(random.sample(range(depth), max_depth))
+            indices = sorted(downsample_indices_by_allele(center_allele_array, max_depth))
+            # indices = sorted(random.sample(range(depth), max_depth))
             downsampled_x = x[:, indices]
             processed_data.append(torch.tensor(downsampled_x))
         else:
@@ -449,9 +489,13 @@ def eval_collate(batch, max_depth_threshold=2000):
     processed_data = []
     for x in data:
         depth = x.shape[1]
+        flank = int((x.shape[0] - 1) / 2)
+        center_allele_array = x[flank, :, 1]
+
         if depth > max_depth:
             # Random down-sampling to max_depth
-            indices = sorted(random.sample(range(depth), max_depth))
+            indices = sorted(downsample_indices_by_allele(center_allele_array, max_depth))
+            # indices = sorted(random.sample(range(depth), max_depth))
             downsampled_x = x[:, indices]
             processed_data.append(torch.tensor(downsampled_x))
         else:
@@ -484,6 +528,7 @@ def eval_collate(batch, max_depth_threshold=2000):
     #
     #     return pos, padded_data
 
+
 def predict_collate(batch, max_depth_threshold=2000):
     # Separate data and labels
     pos, data = zip(*batch)
@@ -494,9 +539,13 @@ def predict_collate(batch, max_depth_threshold=2000):
     processed_data = []
     for x in data:
         depth = x.shape[1]
+        flank = int((x.shape[0] - 1) / 2)
+        center_allele_array = x[flank, :, 1]
+
         if depth > max_depth:
             # Random down-sampling to max_depth
-            indices = sorted(random.sample(range(depth), max_depth))
+            indices = sorted(downsample_indices_by_allele(center_allele_array, max_depth))
+            # indices = sorted(random.sample(range(depth), max_depth))
             downsampled_x = x[:, indices]
             processed_data.append(torch.tensor(downsampled_x))
         else:
