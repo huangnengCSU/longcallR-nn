@@ -229,8 +229,8 @@ class TrainDataset2(Dataset):
 
     def __getitem__(self, i):
         feature_pos = self.feature_positions[i]
-        feature_matrix = sort_allele(
-            self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        # feature_matrix = sort_allele(self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        feature_matrix = self.data[feature_pos]  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         label_pos = self.label_positions[i]
         label = self.labels[i]
         assert feature_pos == label_pos
@@ -283,8 +283,8 @@ class TrainDataset3(Dataset):
 
     def __getitem__(self, i):
         feature_pos = self.feature_positions[i]
-        feature_matrix = sort_allele(
-            self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        # feature_matrix = sort_allele(self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        feature_matrix = self.data[feature_pos]  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         label_pos = self.label_positions[i]
         label = self.labels[i]
         assert feature_pos == label_pos
@@ -353,8 +353,8 @@ class EvalDataset2(Dataset):
 
     def __getitem__(self, i):
         feature_pos = self.feature_positions[i]
-        feature_matrix = sort_allele(
-            self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        # feature_matrix = sort_allele(self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        feature_matrix = self.data[feature_pos]  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         label_pos = self.label_positions[i]
         label = self.labels[i]
         assert feature_pos == label_pos
@@ -440,8 +440,8 @@ class PredictDataset2(Dataset):
 
     def __getitem__(self, i):
         feature_pos = self.feature_positions[i]
-        feature_matrix = sort_allele(
-            self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        # feature_matrix = sort_allele(self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        feature_matrix = self.data[feature_pos]  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         return feature_pos, feature_matrix
 
     def __len__(self):
