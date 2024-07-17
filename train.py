@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import numpy as np
 from nn import LSTMNetwork, ResNetwork
-from dataset import TrainDataset2, TrainDataset3, train_pad_collate
+from dataset import TrainDataset2, TrainDataset3, train_collate
 from optim import Optimizer, build_optimizer
 from utils import AttrDict, init_logger, count_parameters, save_model2
 from tensorboardX import SummaryWriter
@@ -79,7 +79,7 @@ def train2(epoch, config, model, train_paths, batch_size, optimizer, logger, vis
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
     for file in train_paths:
         train_dataset = TrainDataset2(file, 200)
-        dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=train_pad_collate)
+        dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=train_collate)
         for batch in dl:
             feature_tensor, zygosity_label = batch
             feature_tensor = feature_tensor.type(torch.FloatTensor)  # [batch, 2*flanking_size+1, dim]
@@ -124,7 +124,7 @@ def train3(epoch, config, model, train_dataset, batch_size, optimizer, logger, v
     zy_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_class)
     zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
-    dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=train_pad_collate)
+    dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=train_collate)
     for batch in dl:
         feature_tensor, zygosity_label = batch
         feature_tensor = feature_tensor.type(torch.FloatTensor)  # [batch, 2*flanking_size+1, dim]
@@ -206,7 +206,7 @@ def eval2(epoch, config, model, validate_paths, batch_size, logger, visualizer=N
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
     for file in validate_paths:
         validate_dataset = TrainDataset2(file, 200)
-        dl = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=train_pad_collate)
+        dl = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=train_collate)
         for batch in dl:
             feature_tensor, zygosity_label = batch
             feature_tensor = feature_tensor.type(torch.FloatTensor)  # [batch, 33, dim]
@@ -244,7 +244,7 @@ def eval3(epoch, config, model, validate_dataset, batch_size, logger, visualizer
     zy_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_class)
     zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
-    dl = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=train_pad_collate)
+    dl = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=train_collate)
     for batch in dl:
         feature_tensor, zygosity_label = batch
         feature_tensor = feature_tensor.type(torch.FloatTensor)  # [batch, 33, dim]

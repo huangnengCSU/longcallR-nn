@@ -6,7 +6,7 @@ import numpy as np
 from torch.utils.data import DataLoader
 from math import log, e
 from nn import ResNetwork
-from dataset import EvalDataset2, eval_pad_collate
+from dataset import EvalDataset2, eval_collate
 from utils import AttrDict
 
 
@@ -56,12 +56,13 @@ def eval(model, eval_dataset, batch_size, output_file, device):
     fout.close()
 
 
-def eval2(model, eval_paths, batch_size, output_file, device):
+def eval2(model, eval_paths, batch_size, max_depth_threshold, output_file, device):
     model.eval()
     fout = open(output_file, 'w')
     for file in eval_paths:
         eval_dataset = EvalDataset2(file)
-        dl = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, collate_fn=eval_pad_collate)
+        dl = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False,
+                        collate_fn=lambda batch: eval_collate(batch, max_depth_threshold=max_depth_threshold))
         for batch in dl:
             positions, feature_matrices, labels = batch
             feature_tensor = feature_matrices.type(torch.FloatTensor).to(device)
@@ -92,6 +93,7 @@ def main():
     # parser.add_argument('-contig', required=True, help='contig name of the input bin files')
     parser.add_argument('-output', required=True, help='output vcf file')
     parser.add_argument('-batch_size', type=int, default=10, help='batch size')
+    parser.add_argument('-max_depth_threshold', type=int, default=2000, help='max depth threshold')
     parser.add_argument('--no_cuda', action="store_true", help='If running on cpu device, set the argument.')
     opt = parser.parse_args()
     device = torch.device('cuda' if not opt.no_cuda else 'cpu')
@@ -102,7 +104,7 @@ def main():
     pred_model.resnet.load_state_dict(checkpoint['resnet'])
     eval_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
     # eval_dataset = EvalDataset(eval_paths, config.data.flanking_size)
-    eval2(pred_model, eval_paths, opt.batch_size, opt.output, device)
+    eval2(pred_model, eval_paths, opt.batch_size, opt.max_depth_threshold, opt.output, device)
 
 
 if __name__ == '__main__':

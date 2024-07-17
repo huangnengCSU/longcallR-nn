@@ -6,7 +6,7 @@ import numpy as np
 from torch.utils.data import DataLoader
 from math import log, e
 from nn import ResNetwork
-from dataset import PredictDataset2, predict_pad_collate
+from dataset import PredictDataset2, predict_collate
 from utils import AttrDict
 from vcf import write_vcf_header
 
@@ -56,13 +56,14 @@ def predict(model, test_dataset, batch_size, output_file, device):
     fout.close()
 
 
-def predict2(model, test_paths, batch_size, output_file, device):
+def predict2(model, test_paths, batch_size, max_depth_threshold, output_file, device):
     model.eval()
     write_vcf_header(output_file)
     fout = open(output_file, 'a')
     for file in test_paths:
         test_dataset = PredictDataset2(file)
-        dl = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, collate_fn=predict_pad_collate)
+        dl = DataLoader(test_dataset, batch_size=batch_size, shuffle=False,
+                        collate_fn=lambda batch: predict_collate(batch, max_depth_threshold=max_depth_threshold))
         for batch in dl:
             positions, feature_matrices = batch
             feature_tensor = feature_matrices.type(torch.FloatTensor).to(device)
@@ -107,6 +108,7 @@ def main():
     parser.add_argument('-data', required=True, help='directory of feature files')
     # parser.add_argument('-contig', required=True, help='contig name of the input bin files')
     parser.add_argument('-output', required=True, help='output vcf file')
+    parser.add_argument('-max_depth_threshold', type=int, default=2000, help='max depth threshold')
     parser.add_argument('-batch_size', type=int, default=1000, help='batch size')
     parser.add_argument('--no_cuda', action="store_true", help='If running on cpu device, set the argument.')
     opt = parser.parse_args()
@@ -118,7 +120,7 @@ def main():
     pred_model.resnet.load_state_dict(checkpoint['resnet'])
     testing_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
     # predict_dataset = PredictDataset(testing_paths, config.data.flanking_size)
-    predict2(pred_model, testing_paths, opt.batch_size, opt.output, device)
+    predict2(pred_model, testing_paths, opt.batch_size, opt.max_depth_threshold, opt.output, device)
 
 
 if __name__ == '__main__':

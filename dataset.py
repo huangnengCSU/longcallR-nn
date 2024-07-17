@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 import argparse
 import os
+import random
 
 
 # import tables
@@ -192,7 +193,8 @@ class TrainDataset2(Dataset):
 
     def __getitem__(self, i):
         feature_pos = self.feature_positions[i]
-        feature_matrix = sort_allele(self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        feature_matrix = sort_allele(
+            self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         label_pos = self.label_positions[i]
         label = self.labels[i]
         assert feature_pos == label_pos
@@ -245,7 +247,8 @@ class TrainDataset3(Dataset):
 
     def __getitem__(self, i):
         feature_pos = self.feature_positions[i]
-        feature_matrix = sort_allele(self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        feature_matrix = sort_allele(
+            self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         label_pos = self.label_positions[i]
         label = self.labels[i]
         assert feature_pos == label_pos
@@ -314,7 +317,8 @@ class EvalDataset2(Dataset):
 
     def __getitem__(self, i):
         feature_pos = self.feature_positions[i]
-        feature_matrix = sort_allele(self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        feature_matrix = sort_allele(
+            self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         label_pos = self.label_positions[i]
         label = self.labels[i]
         assert feature_pos == label_pos
@@ -400,92 +404,110 @@ class PredictDataset2(Dataset):
 
     def __getitem__(self, i):
         feature_pos = self.feature_positions[i]
-        feature_matrix = sort_allele(self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
+        feature_matrix = sort_allele(
+            self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         return feature_pos, feature_matrix
 
     def __len__(self):
         return len(self.feature_positions)
 
 
-def train_pad_collate(batch, max_depth_threshold=10000):
+def train_collate(batch, max_depth_threshold=2000):
     # Separate data and labels
     data, labels = zip(*batch)
 
     # Find the max depth in the batch
     max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
 
-    # Pad sequences to the same depth
-    padded_data = []
+    processed_data = []
     for x in data:
-        depth_padding = max_depth - x.shape[1]
-        padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
-        padded_data.append(padded_x)
+        depth = x.shape[1]
+        if depth > max_depth:
+            # Random down-sampling to max_depth
+            indices = sorted(random.sample(range(depth), max_depth))
+            downsampled_x = x[:, indices]
+            processed_data.append(torch.tensor(downsampled_x))
+        else:
+            depth_padding = max_depth - x.shape[1]
+            padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
+            processed_data.append(padded_x)
 
     # Stack them into a tensor
-    padded_data = torch.stack(padded_data)
+    padded_data = torch.stack(processed_data)
     labels = torch.tensor(labels)
 
     return padded_data, labels
 
 
-def eval_pad_collate(batch, max_depth_threshold=10000):
+def eval_collate(batch, max_depth_threshold=2000):
     # Separate data and labels
     pos, data, labels = zip(*batch)
 
     # Find the max depth in the batch
     max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
 
-    # Pad sequences to the same depth
-    padded_data = []
+    processed_data = []
     for x in data:
-        depth_padding = max_depth - x.shape[1]
-        padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
-        padded_data.append(padded_x)
+        depth = x.shape[1]
+        if depth > max_depth:
+            # Random down-sampling to max_depth
+            indices = sorted(random.sample(range(depth), max_depth))
+            downsampled_x = x[:, indices]
+            processed_data.append(torch.tensor(downsampled_x))
+        else:
+            depth_padding = max_depth - x.shape[1]
+            padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
+            processed_data.append(padded_x)
 
     # Stack them into a tensor
-    padded_data = torch.stack(padded_data)
+    padded_data = torch.stack(processed_data)
     labels = torch.tensor(labels)
 
     return pos, padded_data, labels
 
+    # def predict_pad_collate(batch, max_depth_threshold=10000):
+    #     # Separate data and labels
+    #     pos, data = zip(*batch)
+    #
+    #     # Find the max depth in the batch
+    #     max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
+    #
+    #     # Pad sequences to the same depth
+    #     padded_data = []
+    #     for x in data:
+    #         depth_padding = max_depth - x.shape[1]
+    #         padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
+    #         padded_data.append(padded_x)
+    #
+    #     # Stack them into a tensor
+    #     padded_data = torch.stack(padded_data)
+    #
+    #     return pos, padded_data
 
-# def predict_pad_collate(batch, max_depth_threshold=10000):
-#     # Separate data and labels
-#     pos, data = zip(*batch)
-#
-#     # Find the max depth in the batch
-#     max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
-#
-#     # Pad sequences to the same depth
-#     padded_data = []
-#     for x in data:
-#         depth_padding = max_depth - x.shape[1]
-#         padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
-#         padded_data.append(padded_x)
-#
-#     # Stack them into a tensor
-#     padded_data = torch.stack(padded_data)
-#
-#     return pos, padded_data
-
-def predict_pad_collate(batch):
+def predict_collate(batch, max_depth_threshold=2000):
     # Separate data and labels
     pos, data = zip(*batch)
 
     # Find the max depth in the batch
-    max_depth = max([x.shape[1] for x in data])
+    max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
 
-    # Pad sequences to the same depth
-    padded_data = []
+    processed_data = []
     for x in data:
-        depth_padding = max_depth - x.shape[1]
-        padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
-        padded_data.append(padded_x)
+        depth = x.shape[1]
+        if depth > max_depth:
+            # Random down-sampling to max_depth
+            indices = sorted(random.sample(range(depth), max_depth))
+            downsampled_x = x[:, indices]
+            processed_data.append(torch.tensor(downsampled_x))
+        else:
+            depth_padding = max_depth - x.shape[1]
+            padded_x = F.pad(torch.tensor(x), (0, 0, 0, depth_padding))
+            processed_data.append(padded_x)
 
     # Stack them into a tensor
-    padded_data = torch.stack(padded_data)
+    processed_data = torch.stack(processed_data)
 
-    return pos, padded_data
+    return pos, processed_data
 
 
 if __name__ == '__main__':
@@ -524,10 +546,20 @@ if __name__ == '__main__':
     #             print("Epoch ", epoch, ":", feature_matrices.shape)
     #         epoch += 1
 
-    dataset = TrainDataset3(data_folder=opt.data, max_depth=200)
-    while epoch < 2:
-        dl = DataLoader(dataset, batch_size=100, shuffle=True, collate_fn=train_pad_collate)
+    # dataset = TrainDataset3(data_folder=opt.data, max_depth=200)
+    # while epoch < 2:
+    #     dl = DataLoader(dataset, batch_size=100, shuffle=True, collate_fn=train_pad_collate)
+    #     for batch in dl:
+    #         feature_matrices, labels = batch
+    #         print("Epoch ", epoch, ":", feature_matrices.shape)
+    #     epoch += 1
+
+    filepaths = [opt.data + '/' + file for file in os.listdir(opt.data) if file.endswith('.npz')]
+    for file in filepaths:
+        dataset = PredictDataset2(file)
+        max_depth_threshold = 2000
+        dl = DataLoader(dataset, batch_size=100, shuffle=True,
+                        collate_fn=lambda batch: predict_collate(batch, max_depth_threshold=max_depth_threshold))
         for batch in dl:
-            feature_matrices, labels = batch
-            print("Epoch ", epoch, ":", feature_matrices.shape)
-        epoch += 1
+            positions, feature_matrices = batch
+            print(feature_matrices.shape)
