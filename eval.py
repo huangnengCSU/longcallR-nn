@@ -88,23 +88,23 @@ def eval2(model, eval_paths, batch_size, max_depth_threshold, output_file, devic
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-config', type=str, required=True, help='path to config file')
-    parser.add_argument('-model_path', required=True, help='path to trained model')
+    parser.add_argument('-model', required=True, help='path to trained model')
     parser.add_argument('-data', required=True, help='directory of feature files')
     # parser.add_argument('-contig', required=True, help='contig name of the input bin files')
     parser.add_argument('-output', required=True, help='output vcf file')
     parser.add_argument('-batch_size', type=int, default=10, help='batch size')
-    parser.add_argument('-max_depth_threshold', type=int, default=2000, help='max depth threshold')
+    parser.add_argument('-max_depth', type=int, default=2000, help='max depth threshold')
     parser.add_argument('--no_cuda', action="store_true", help='If running on cpu device, set the argument.')
     opt = parser.parse_args()
     device = torch.device('cuda' if not opt.no_cuda else 'cpu')
     configfile = open(opt.config)
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
     pred_model = ResNetwork(config.model).to(device)
-    checkpoint = torch.load(opt.model_path, map_location=device)
+    checkpoint = torch.load(opt.model, map_location=device)
     pred_model.resnet.load_state_dict(checkpoint['resnet'])
     eval_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
     # eval_dataset = EvalDataset(eval_paths, config.data.flanking_size)
-    eval2(pred_model, eval_paths, opt.batch_size, opt.max_depth_threshold, opt.output, device)
+    eval2(pred_model, eval_paths, opt.batch_size, opt.max_depth, opt.output, device)
 
 
 if __name__ == '__main__':
