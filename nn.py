@@ -112,7 +112,7 @@ class SPPLayer(nn.Module):
         spp_output = []
         for pool_size in self.pool_sizes:
             pooled = F.adaptive_max_pool2d(x, output_size=(pool_size, pool_size))
-            spp_output.append(pooled.view(batch_size, -1))
+            spp_output.append(pooled.reshape(batch_size, -1))
         spp_output = torch.cat(spp_output, dim=1)
         return spp_output
 
@@ -121,46 +121,35 @@ class ResNetwork(nn.Module):
     def __init__(self, config):
         super(ResNetwork, self).__init__()
         self.config = config
+
+        # Select the correct ResNet model
         if config.model_name == 'resnet18':
-            if config.pretrained:
-                self.resnet = models.resnet18(pretrained=True)
-            else:
-                self.resnet = models.resnet18(pretrained=False)
+            self.resnet = models.resnet18(pretrained=config.pretrained)
         elif config.model_name == 'resnet34':
-            if config.pretrained:
-                self.resnet = models.resnet34(pretrained=True)
-            else:
-                self.resnet = models.resnet34(pretrained=False)
+            self.resnet = models.resnet34(pretrained=config.pretrained)
         elif config.model_name == 'resnet50':
-            if config.pretrained:
-                self.resnet = models.resnet50(pretrained=True)
-            else:
-                self.resnet = models.resnet50(pretrained=False)
+            self.resnet = models.resnet50(pretrained=config.pretrained)
         elif config.model_name == 'resnet101':
-            if config.pretrained:
-                self.resnet = models.resnet101(pretrained=True)
-            else:
-                self.resnet = models.resnet101(pretrained=False)
+            self.resnet = models.resnet101(pretrained=config.pretrained)
         elif config.model_name == 'resnet152':
-            if config.pretrained:
-                self.resnet = models.resnet152(pretrained=True)
-            else:
-                self.resnet = models.resnet152(pretrained=False)
+            self.resnet = models.resnet152(pretrained=config.pretrained)
         else:
             raise ValueError("Unexpected model name")
 
-        self.resnet.conv1 = nn.Conv2d(7, 64, kernel_size=7, stride=2, padding=3, bias=False)  # change input channel
+        # Adjust the first convolutional layer to accept 7 input channels
+        self.resnet.conv1 = nn.Conv2d(7, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
         if config.spp:
             pool_sizes = [1, 2, 4]
             self.resnet.avgpool = nn.Identity()
             self.resnet.fc = nn.Identity()
             self.spp = SPPLayer(pool_sizes)
-            # num_features = self.resnet.fc.in_features * sum([i * i for i in pool_sizes])
+            # Compute number of features after SPP
             num_features = self.resnet.layer4[2].conv3.out_channels * sum([size * size for size in pool_sizes])
             self.fc = nn.Linear(num_features, config.num_class, bias=True)
         else:
-            self.fc = nn.Linear(self.resnet.fc.in_features, config.num_class, bias=True)  # change output class
+            self.fc = nn.Linear(self.resnet.fc.in_features, config.num_class, bias=True)
+
         self.zy_crit = LabelSmoothingLoss(config.num_class, 0.1)
 
     def forward(self, x, zy_target):
@@ -178,14 +167,13 @@ class ResNetwork(nn.Module):
             x = self.spp(x)
         else:
             x = self.resnet.avgpool(x)
-            x = torch.flatten(x, 1)
+            x = x.reshape(x.size(0), -1)  # Use reshape instead of flatten
 
         zy_logits = self.fc(x)
 
         zy_loss = self.zy_crit(zy_logits.contiguous().view(-1, self.config.num_class),
                                zy_target.contiguous().view(-1))
-        loss = zy_loss
-        return loss, zy_logits
+        return zy_loss, zy_logits
 
     def predict(self, x):
         x = self.resnet.conv1(x)
@@ -202,8 +190,9 @@ class ResNetwork(nn.Module):
             x = self.spp(x)
         else:
             x = self.resnet.avgpool(x)
-            x = torch.flatten(x, 1)
+            x = x.reshape(x.size(0), -1)  # Use reshape instead of flatten
 
         zy_logits = self.fc(x)
-        zy_logits = torch.softmax(zy_logits, 1)
-        return zy_logits
+        zy_probs = torch.softmax(zy_logits, dim=1)
+        return zy_probs
+
