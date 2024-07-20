@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision.models as models
 from optim import LabelSmoothingLoss
 
@@ -101,6 +102,27 @@ class LSTMNetwork(nn.Module):
         return zy_logits
 
 
+class SPPLayer(nn.Module):
+    def __init__(self, pool_sizes):
+        super(SPPLayer, self).__init__()
+        self.pool_sizes = pool_sizes
+
+    def forward(self, x):
+        batch_size, c, h, w = x.size()
+        spp_output = []
+        for pool_size in self.pool_sizes:
+            pool_h = h // pool_size
+            pool_w = w // pool_size
+            if h % pool_size != 0:
+                pool_h += 1
+            if w % pool_size != 0:
+                pool_w += 1
+            tensor = F.adaptive_max_pool2d(x, output_size=(pool_size, pool_size)).view(batch_size, -1)
+            spp_output.append(tensor)
+        spp_output = torch.cat(spp_output, dim=1)
+        return spp_output
+
+
 class ResNetwork(nn.Module):
     def __init__(self, config):
         super(ResNetwork, self).__init__()
@@ -132,18 +154,61 @@ class ResNetwork(nn.Module):
                 self.resnet = models.resnet152(pretrained=False)
         else:
             raise ValueError("Unexpected model name")
+
         self.resnet.conv1 = nn.Conv2d(7, 64, kernel_size=7, stride=2, padding=3, bias=False)  # change input channel
-        self.resnet.fc = nn.Linear(self.resnet.fc.in_features, config.num_class, bias=True)  # change output class
+
+        if config.spp:
+            pool_sizes = [1, 2, 4]
+            self.resnet.avgpool = nn.Identity()
+            self.resnet.fc = nn.Identity()
+            self.spp = SPPLayer(pool_sizes)
+            num_features = self.resnet.fc.in_features * sum([i * i for i in pool_sizes])
+            self.fc = nn.Linear(num_features, config.num_class, bias=True)
+        else:
+            self.fc = nn.Linear(self.resnet.fc.in_features, config.num_class, bias=True)  # change output class
         self.zy_crit = LabelSmoothingLoss(config.num_class, 0.1)
 
-    def forward(self, inputs, zy_target):
-        zy_logits = self.resnet(inputs)
+    def forward(self, x, zy_target):
+        x = self.resnet.conv1(x)
+        x = self.resnet.bn1(x)
+        x = self.resnet.relu(x)
+        x = self.resnet.maxpool(x)
+
+        x = self.resnet.layer1(x)
+        x = self.resnet.layer2(x)
+        x = self.resnet.layer3(x)
+        x = self.resnet.layer4(x)
+
+        if self.config.spp:
+            x = self.spp(x)
+        else:
+            x = self.resnet.avgpool(x)
+            x = torch.flatten(x, 1)
+
+        zy_logits = self.fc(x)
+
         zy_loss = self.zy_crit(zy_logits.contiguous().view(-1, self.config.num_class),
                                zy_target.contiguous().view(-1))
         loss = zy_loss
         return loss, zy_logits
 
-    def predict(self, inputs):
-        zy_logits = self.resnet(inputs)
+    def predict(self, x):
+        x = self.resnet.conv1(x)
+        x = self.resnet.bn1(x)
+        x = self.resnet.relu(x)
+        x = self.resnet.maxpool(x)
+
+        x = self.resnet.layer1(x)
+        x = self.resnet.layer2(x)
+        x = self.resnet.layer3(x)
+        x = self.resnet.layer4(x)
+
+        if self.config.spp:
+            x = self.spp(x)
+        else:
+            x = self.resnet.avgpool(x)
+            x = torch.flatten(x, 1)
+
+        zy_logits = self.fc(x)
         zy_logits = torch.softmax(zy_logits, 1)
         return zy_logits
