@@ -162,7 +162,8 @@ class ResNetwork(nn.Module):
             self.resnet.avgpool = nn.Identity()
             self.resnet.fc = nn.Identity()
             self.spp = SPPLayer(pool_sizes)
-            num_features = self.resnet.fc.in_features * sum([i * i for i in pool_sizes])
+            # num_features = self.resnet.fc.in_features * sum([i * i for i in pool_sizes])
+            num_features = self.resnet.layer4[2].conv3.out_channels * sum([size * size for size in pool_sizes])
             self.fc = nn.Linear(num_features, config.num_class, bias=True)
         else:
             self.fc = nn.Linear(self.resnet.fc.in_features, config.num_class, bias=True)  # change output class
