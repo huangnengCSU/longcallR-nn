@@ -111,14 +111,8 @@ class SPPLayer(nn.Module):
         batch_size, c, h, w = x.size()
         spp_output = []
         for pool_size in self.pool_sizes:
-            pool_h = h // pool_size
-            pool_w = w // pool_size
-            if h % pool_size != 0:
-                pool_h += 1
-            if w % pool_size != 0:
-                pool_w += 1
-            tensor = F.adaptive_max_pool2d(x, output_size=(pool_size, pool_size)).view(batch_size, -1)
-            spp_output.append(tensor)
+            pooled = F.adaptive_max_pool2d(x, output_size=(pool_size, pool_size))
+            spp_output.append(pooled.view(batch_size, -1))
         spp_output = torch.cat(spp_output, dim=1)
         return spp_output
 
