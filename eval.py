@@ -81,12 +81,12 @@ def eval2(model, eval_paths, batch_size, max_depth_threshold, output_file, devic
             ## position, zygosity, quality
             for i in range(len(positions)):
                 if zy_output[i] != labels[i]:
-                    fout.write(positions[i] + '\t0\t' + str(labels[i].item()) + ',' + str(zy_output[i]) + ',' + str(
-                        zy_qual[i]) + ',' + str(zy_output_[i][0]) + ',' + str(zy_output_[i][1]) + ',' + str(
+                    fout.write(positions[i] + '\t0\t' + str(zy_qual[i]) + '\t' + str(labels[i].item()) + ',' + str(
+                        zy_output[i]) + '\t' + str(zy_output_[i][0]) + ',' + str(zy_output_[i][1]) + ',' + str(
                         zy_output_[i][2]) + ',' + str(zy_output_[i][3]) + ',' + str(zy_output_[i][4]) + '\n')
                 else:
-                    fout.write(positions[i] + '\t1\t' + str(labels[i].item()) + ',' + str(zy_output[i]) + ',' + str(
-                        zy_qual[i]) + ',' + str(zy_output_[i][0]) + ',' + str(zy_output_[i][1]) + ',' + str(
+                    fout.write(positions[i] + '\t1\t' + str(zy_qual[i]) + '\t' + str(labels[i].item()) + ',' + str(
+                        zy_output[i]) + '\t' + str(zy_output_[i][0]) + ',' + str(zy_output_[i][1]) + ',' + str(
                         zy_output_[i][2]) + ',' + str(zy_output_[i][3]) + ',' + str(zy_output_[i][4]) + '\n')
     fout.close()
 
