@@ -117,7 +117,13 @@ def main():
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
     pred_model = ResNetwork(config.model).to(device)
     checkpoint = torch.load(opt.model, map_location=device)
-    pred_model.resnet.load_state_dict(checkpoint['resnet'])
+    if config.model.spp:
+        pred_model.resnet.load_state_dict(checkpoint['resnet'])
+        pred_model.spp.load_state_dict(checkpoint['spp'])
+        pred_model.fc.load_state_dict(checkpoint['fc'])
+    else:
+        pred_model.resnet.load_state_dict(checkpoint['resnet'])
+        pred_model.fc.load_state_dict(checkpoint['fc'])
     testing_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
     # predict_dataset = PredictDataset(testing_paths, config.data.flanking_size)
     predict2(pred_model, testing_paths, opt.batch_size, opt.max_depth, opt.output, device)

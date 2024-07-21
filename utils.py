@@ -79,11 +79,22 @@ def save_model(model, optimizer, config, save_name):
 
 def save_model2(model, optimizer, config, save_name):
     multi_gpu = True if config.training.num_gpu > 1 else False
-    checkpoint = {
-        'resnet': model.module.resnet.state_dict() if multi_gpu else model.resnet.state_dict(),
-        'optimizer': optimizer.state_dict(),
-        'epoch': optimizer.current_epoch,
-        'step': optimizer.global_step
-    }
+    if config.model.spp:
+        checkpoint = {
+            'encoder': model.module.encoder.state_dict() if multi_gpu else model.encoder.state_dict(),
+            'spp': model.module.spp.state_dict() if multi_gpu else model.spp.state_dict(),
+            'fc': model.module.fc.state_dict() if multi_gpu else model.fc.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'epoch': optimizer.current_epoch,
+            'step': optimizer.global_step
+        }
+    else:
+        checkpoint = {
+            'resnet': model.module.resnet.state_dict() if multi_gpu else model.resnet.state_dict(),
+            'fc': model.module.fc.state_dict() if multi_gpu else model.fc.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'epoch': optimizer.current_epoch,
+            'step': optimizer.global_step
+        }
 
     torch.save(checkpoint, save_name)
