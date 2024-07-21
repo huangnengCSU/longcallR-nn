@@ -241,7 +241,7 @@ class TrainDataset2(Dataset):
 
 
 class TrainDataset3(Dataset):
-    def __init__(self, data_folder, max_depth=1000):
+    def __init__(self, data_folder):
 
         all_data = {}
         all_feature_positions = []
@@ -255,12 +255,6 @@ class TrainDataset3(Dataset):
             data = np.load(datapath)
             feature_positions = data.files
 
-            ## filter out the data with depth > max_depth
-            indices = []
-            for i, feature_pos in enumerate(feature_positions):
-                if data[feature_pos].shape[1] <= max_depth:
-                    indices.append(i)
-
             labelpath = os.path.splitext(datapath)[0] + '.label'
             label_positions = []
             labels = []
@@ -270,11 +264,11 @@ class TrainDataset3(Dataset):
                     labels.append(int(fields[0]))
                     label_positions.append(fields[1])
 
-            all_feature_positions.extend([feature_positions[i] for i in indices])
-            all_labels.extend([labels[i] for i in indices])
-            all_label_positions.extend([label_positions[i] for i in indices])
-            for i in indices:
-                all_data[feature_positions[i]] = data[feature_positions[i]]
+            all_feature_positions.extend(feature_positions)
+            all_labels.extend(labels)
+            all_label_positions.extend(label_positions)
+            for feature_pos in feature_positions:
+                all_data[feature_pos] = data[feature_pos]
 
         self.data = all_data
         self.feature_positions = all_feature_positions

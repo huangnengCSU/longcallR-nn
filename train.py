@@ -124,7 +124,8 @@ def train3(epoch, config, model, train_dataset, batch_size, optimizer, logger, v
     zy_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_class)
     zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
-    dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=train_collate)
+    dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
+                    collate_fn=lambda batch: train_collate(batch, max_depth_threshold=config.data.max_depth))
     for batch in dl:
         feature_tensor, zygosity_label = batch
         feature_tensor = feature_tensor.type(torch.FloatTensor)  # [batch, 2*flanking_size+1, dim]
@@ -244,7 +245,8 @@ def eval3(epoch, config, model, validate_dataset, batch_size, logger, visualizer
     zy_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_class)
     zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
     zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
-    dl = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=train_collate)
+    dl = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False,
+                    collate_fn=lambda batch: train_collate(batch, max_depth_threshold=config.data.max_depth))
     for batch in dl:
         feature_tensor, zygosity_label = batch
         feature_tensor = feature_tensor.type(torch.FloatTensor)  # [batch, 33, dim]
@@ -297,9 +299,9 @@ def main():
     if config.data.dev != "None":
         # training_paths = [config.data.train + '/' + fn for fn in os.listdir(config.data.train) if fn.endswith('.npz')]
         # validating_paths = [config.data.dev + '/' + fn for fn in os.listdir(config.data.dev) if fn.endswith('.npz')]
-        validating_dataset = TrainDataset3(config.data.dev, config.data.max_depth)
+        validating_dataset = TrainDataset3(config.data.dev)
         logger.info("Load validating dataset from %s" % config.data.dev)
-        training_dataset = TrainDataset3(config.data.train, config.data.max_depth)
+        training_dataset = TrainDataset3(config.data.train)
         logger.info("Load training dataset from %s" % config.data.train)
         # train_dataset = TrainDataset(training_paths, config.data.flanking_size)
         # validate_dataset = TrainDataset(validating_paths, config.data.flanking_size)
