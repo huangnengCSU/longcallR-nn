@@ -245,7 +245,8 @@ class TrainDataset3(Dataset):
 
         all_data = {}
         all_feature_positions = []
-        all_labels = []
+        all_zy_labels = []
+        all_gt_labels = []
         all_label_positions = []
 
         for fn in os.listdir(data_folder):
@@ -257,22 +258,26 @@ class TrainDataset3(Dataset):
 
             labelpath = os.path.splitext(datapath)[0] + '.label'
             label_positions = []
-            labels = []
+            zy_labels = []
+            gt_labels = []
             with open(labelpath, 'r') as fin:
                 for line in fin:
                     fields = line.strip().split('\t')
-                    labels.append(int(fields[0]))
-                    label_positions.append(fields[1])
+                    zy_labels.append(int(fields[0]))
+                    gt_labels.append(int(fields[1]))
+                    label_positions.append(fields[2])
 
             all_feature_positions.extend(feature_positions)
-            all_labels.extend(labels)
+            all_zy_labels.extend(zy_labels)
+            all_gt_labels.extend(gt_labels)
             all_label_positions.extend(label_positions)
             for feature_pos in feature_positions:
                 all_data[feature_pos] = data[feature_pos]
 
         self.data = all_data
         self.feature_positions = all_feature_positions
-        self.labels = all_labels
+        self.zy_labels = all_zy_labels
+        self.gt_labels = all_gt_labels
         self.label_positions = all_label_positions
 
     def __getitem__(self, i):
@@ -280,12 +285,13 @@ class TrainDataset3(Dataset):
         # feature_matrix = sort_allele(self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         feature_matrix = self.data[feature_pos]  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         label_pos = self.label_positions[i]
-        label = self.labels[i]
+        zy_label = self.zy_labels[i]
+        gt_label = self.gt_labels[i]
         assert feature_pos == label_pos
-        return feature_matrix, label
+        return feature_matrix, zy_label, gt_label
 
     def __len__(self):
-        return len(self.labels)
+        return len(self.zy_labels)
 
 
 class EvalDataset(Dataset):
@@ -333,16 +339,19 @@ class EvalDataset2(Dataset):
 
         labelpath = os.path.splitext(datapath)[0] + '.label'
         label_positions = []
-        labels = []
+        zy_labels = []
+        gt_labels = []
         with open(labelpath, 'r') as fin:
             for line in fin:
                 fields = line.strip().split('\t')
-                labels.append(int(fields[0]))
-                label_positions.append(fields[1])
+                zy_labels.append(int(fields[0]))
+                gt_labels.append(int(fields[1]))
+                label_positions.append(fields[2])
 
         self.data = data
         self.feature_positions = feature_positions
-        self.labels = labels
+        self.zy_labels = zy_labels
+        self.gt_labels = gt_labels
         self.label_positions = label_positions
 
     def __getitem__(self, i):
@@ -350,12 +359,13 @@ class EvalDataset2(Dataset):
         # feature_matrix = sort_allele(self.data[feature_pos])  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         feature_matrix = self.data[feature_pos]  # [flanking_size * 2 + 1, depth, nfeatures], depth not fixed
         label_pos = self.label_positions[i]
-        label = self.labels[i]
+        zy_label = self.zy_labels[i]
+        gt_label = self.gt_labels[i]
         assert feature_pos == label_pos
-        return feature_pos, feature_matrix, label
+        return feature_pos, feature_matrix, zy_label, gt_label
 
     def __len__(self):
-        return len(self.labels)
+        return len(self.zy_labels)
 
 
 # class PredictDataset(Dataset):
@@ -444,7 +454,7 @@ class PredictDataset2(Dataset):
 
 def train_collate(batch, max_depth_threshold=2000):
     # Separate data and labels
-    data, labels = zip(*batch)
+    data, zy_labels, gt_labels = zip(*batch)
 
     # Find the max depth in the batch
     max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
@@ -468,14 +478,15 @@ def train_collate(batch, max_depth_threshold=2000):
 
     # Stack them into a tensor
     padded_data = torch.stack(processed_data)
-    labels = torch.tensor(labels)
+    zy_labels = torch.tensor(zy_labels)
+    gt_labels = torch.tensor(gt_labels)
 
-    return padded_data, labels
+    return padded_data, zy_labels, gt_labels
 
 
 def eval_collate(batch, max_depth_threshold=2000):
     # Separate data and labels
-    pos, data, labels = zip(*batch)
+    pos, data, zy_labels, gt_labels = zip(*batch)
 
     # Find the max depth in the batch
     max_depth = min(max([x.shape[1] for x in data]), max_depth_threshold)
@@ -499,9 +510,10 @@ def eval_collate(batch, max_depth_threshold=2000):
 
     # Stack them into a tensor
     padded_data = torch.stack(processed_data)
-    labels = torch.tensor(labels)
+    zy_labels = torch.tensor(zy_labels)
+    gt_labels = torch.tensor(gt_labels)
 
-    return pos, padded_data, labels
+    return pos, padded_data, zy_labels, gt_labels
 
     # def predict_pad_collate(batch, max_depth_threshold=10000):
     #     # Separate data and labels
