@@ -68,7 +68,7 @@ def predict2(model, test_paths, batch_size, max_depth_threshold, output_file, de
             positions, feature_matrices = batch
             feature_tensor = feature_matrices.type(torch.FloatTensor).to(device)
             feature_tensor = feature_tensor.permute(0, 3, 1, 2)  # [batch, dim, L, W]
-            zy_output_ = model.predict(feature_tensor)
+            zy_output_, _ = model.predict(feature_tensor)
             zy_output_ = zy_output_.detach().cpu().numpy()
             zy_prob = np.max(zy_output_, axis=1)  # [N]
             zy_output = np.argmax(zy_output_, axis=1)  # [N]
@@ -120,10 +120,12 @@ def main():
     if config.model.spp:
         pred_model.resnet.load_state_dict(checkpoint['resnet'])
         pred_model.spp.load_state_dict(checkpoint['spp'])
-        pred_model.fc.load_state_dict(checkpoint['fc'])
+        pred_model.zy_fc.load_state_dict(checkpoint['zy_fc'])
+        pred_model.gt_fc.load_state_dict(checkpoint['gt_fc'])
     else:
         pred_model.resnet.load_state_dict(checkpoint['resnet'])
-        pred_model.fc.load_state_dict(checkpoint['fc'])
+        pred_model.zy_fc.load_state_dict(checkpoint['zy_fc'])
+        pred_model.gt_fc.load_state_dict(checkpoint['gt_fc'])
     testing_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
     # predict_dataset = PredictDataset(testing_paths, config.data.flanking_size)
     predict2(pred_model, testing_paths, opt.batch_size, opt.max_depth, opt.output, device)
