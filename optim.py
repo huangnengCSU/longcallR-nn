@@ -125,19 +125,41 @@ def label_smoothing(label, n_class, smoothing=0.1):
     return label_smooth
 
 
+# class LabelSmoothingLoss(nn.Module):
+#     def __init__(self, classes, smoothing=0.0, dim=-1):
+#         super(LabelSmoothingLoss, self).__init__()
+#         self.confidence = 1.0 - smoothing
+#         self.smoothing = smoothing
+#         self.cls = classes
+#         self.dim = dim
+#
+#     def forward(self, pred, target):
+#         pred = pred.log_softmax(dim=self.dim)
+#         with torch.no_grad():
+#             # true_dist = pred.data.clone()
+#             true_dist = torch.zeros_like(pred)
+#             true_dist.fill_(self.smoothing / (self.cls - 1))
+#             true_dist.scatter_(1, target.data.unsqueeze(1), self.confidence)
+#         return torch.mean(torch.sum(-true_dist * pred, dim=self.dim))
+
 class LabelSmoothingLoss(nn.Module):
-    def __init__(self, classes, smoothing=0.0, dim=-1):
+    def __init__(self, classes, smoothing=0.0, dim=-1, class_weights=None):
         super(LabelSmoothingLoss, self).__init__()
         self.confidence = 1.0 - smoothing
         self.smoothing = smoothing
         self.cls = classes
         self.dim = dim
+        self.class_weights = class_weights if class_weights is not None else torch.ones(classes)
 
     def forward(self, pred, target):
         pred = pred.log_softmax(dim=self.dim)
         with torch.no_grad():
-            # true_dist = pred.data.clone()
             true_dist = torch.zeros_like(pred)
             true_dist.fill_(self.smoothing / (self.cls - 1))
             true_dist.scatter_(1, target.data.unsqueeze(1), self.confidence)
-        return torch.mean(torch.sum(-true_dist * pred, dim=self.dim))
+
+        # Apply class weights
+        class_weights = self.class_weights[target.data].unsqueeze(1)
+        loss = torch.sum(-true_dist * pred, dim=self.dim) * class_weights.squeeze()
+
+        return torch.mean(loss)
