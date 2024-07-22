@@ -67,27 +67,47 @@ def eval2(model, eval_paths, batch_size, max_depth_threshold, output_file, devic
         dl = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False,
                         collate_fn=lambda batch: eval_collate(batch, max_depth_threshold=max_depth_threshold))
         for batch in dl:
-            positions, feature_matrices, labels = batch
+            positions, feature_matrices, zy_labels, gt_labels = batch
             feature_tensor = feature_matrices.type(torch.FloatTensor).to(device)
             feature_tensor = feature_tensor.permute(0, 3, 1, 2)  # [batch, ndim, L, W]
 
-            zy_output_ = model.predict(feature_tensor)
+            zy_output_, gt_output_ = model.predict(feature_tensor)
             zy_output_ = zy_output_.detach().cpu().numpy()
             zy_prob = np.max(zy_output_, axis=1)  # [N]
             zy_output = np.argmax(zy_output_, axis=1)  # [N]
             zy_qual = calculate_phred_scores(1 - zy_prob)
+            gt_output_ = gt_output_.detach().cpu().numpy()
+            gt_prob = np.max(gt_output_, axis=1)  # [N]
+            gt_output = np.argmax(gt_output_, axis=1)  # [N]
+            gt_qual = calculate_phred_scores(1 - gt_prob)
 
             ## write to csv file
             ## position, zygosity, quality
             for i in range(len(positions)):
-                if zy_output[i] != labels[i]:
-                    fout.write(positions[i] + '\t0\t' + str(zy_qual[i]) + '\t' + str(labels[i].item()) + ',' + str(
-                        zy_output[i]) + '\t' + str(zy_output_[i][0]) + ',' + str(zy_output_[i][1]) + ',' + str(
-                        zy_output_[i][2]) + ',' + str(zy_output_[i][3]) + ',' + str(zy_output_[i][4]) + '\n')
+                if zy_output[i] != zy_labels[i]:
+                    fout.write("{0}\t{1}\t{2}\t{3},{4}\t{5},{6},{7},{8},{9}\t{10}\n".format(positions[i],
+                                                                                            0,
+                                                                                            zy_qual[i],
+                                                                                            zy_labels[i].item(),
+                                                                                            zy_output[i],
+                                                                                            zy_output_[i][0],
+                                                                                            zy_output_[i][1],
+                                                                                            zy_output_[i][2],
+                                                                                            zy_output_[i][3],
+                                                                                            zy_output_[i][4],
+                                                                                            gt_qual[i]))
                 else:
-                    fout.write(positions[i] + '\t1\t' + str(zy_qual[i]) + '\t' + str(labels[i].item()) + ',' + str(
-                        zy_output[i]) + '\t' + str(zy_output_[i][0]) + ',' + str(zy_output_[i][1]) + ',' + str(
-                        zy_output_[i][2]) + ',' + str(zy_output_[i][3]) + ',' + str(zy_output_[i][4]) + '\n')
+                    fout.write("{0}\t{1}\t{2}\t{3},{4}\t{5},{6},{7},{8},{9}\t{10}\n".format(positions[i],
+                                                                                            1,
+                                                                                            zy_qual[i],
+                                                                                            zy_labels[i].item(),
+                                                                                            zy_output[i],
+                                                                                            zy_output_[i][0],
+                                                                                            zy_output_[i][1],
+                                                                                            zy_output_[i][2],
+                                                                                            zy_output_[i][3],
+                                                                                            zy_output_[i][4],
+                                                                                            gt_qual[i]))
     fout.close()
 
 
@@ -110,10 +130,12 @@ def main():
     if config.model.spp:
         pred_model.resnet.load_state_dict(checkpoint['resnet'])
         pred_model.spp.load_state_dict(checkpoint['spp'])
-        pred_model.fc.load_state_dict(checkpoint['fc'])
+        pred_model.zy_fc.load_state_dict(checkpoint['zy_fc'])
+        pred_model.gt_fc.load_state_dict(checkpoint['gt_fc'])
     else:
         pred_model.resnet.load_state_dict(checkpoint['resnet'])
-        pred_model.fc.load_state_dict(checkpoint['fc'])
+        pred_model.zy_fc.load_state_dict(checkpoint['zy_fc'])
+        pred_model.gt_fc.load_state_dict(checkpoint['gt_fc'])
     eval_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
     # eval_dataset = EvalDataset(eval_paths, config.data.flanking_size)
     eval2(pred_model, eval_paths, opt.batch_size, opt.max_depth, opt.output, device)
