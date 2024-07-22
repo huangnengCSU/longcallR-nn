@@ -96,7 +96,7 @@ def eval2(model, eval_paths, batch_size, max_depth_threshold, output_file, devic
                                                                                                  zy_output_[i][3],
                                                                                                  zy_output_[i][4],
                                                                                                  gt_labels[i].item(),
-                                                                                                 gt_qual[i]))
+                                                                                                 gt_output[i]))
                 else:
                     fout.write("{0}\t{1}\t{2}\t{3},{4}\t{5},{6},{7},{8},{9}\t{10},{11}\n".format(positions[i],
                                                                                                  1,
@@ -109,7 +109,7 @@ def eval2(model, eval_paths, batch_size, max_depth_threshold, output_file, devic
                                                                                                  zy_output_[i][3],
                                                                                                  zy_output_[i][4],
                                                                                                  gt_labels[i].item(),
-                                                                                                 gt_qual[i]))
+                                                                                                 gt_output[i]))
     fout.close()
 
 
