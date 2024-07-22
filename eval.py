@@ -85,29 +85,31 @@ def eval2(model, eval_paths, batch_size, max_depth_threshold, output_file, devic
             ## position, zygosity, quality
             for i in range(len(positions)):
                 if zy_output[i] != zy_labels[i]:
-                    fout.write("{0}\t{1}\t{2}\t{3},{4}\t{5},{6},{7},{8},{9}\t{10}\n".format(positions[i],
-                                                                                            0,
-                                                                                            zy_qual[i],
-                                                                                            zy_labels[i].item(),
-                                                                                            zy_output[i],
-                                                                                            zy_output_[i][0],
-                                                                                            zy_output_[i][1],
-                                                                                            zy_output_[i][2],
-                                                                                            zy_output_[i][3],
-                                                                                            zy_output_[i][4],
-                                                                                            gt_qual[i]))
+                    fout.write("{0}\t{1}\t{2}\t{3},{4}\t{5},{6},{7},{8},{9}\t{10},{11}\n".format(positions[i],
+                                                                                                 0,
+                                                                                                 zy_qual[i],
+                                                                                                 zy_labels[i].item(),
+                                                                                                 zy_output[i],
+                                                                                                 zy_output_[i][0],
+                                                                                                 zy_output_[i][1],
+                                                                                                 zy_output_[i][2],
+                                                                                                 zy_output_[i][3],
+                                                                                                 zy_output_[i][4],
+                                                                                                 gt_labels[i].item(),
+                                                                                                 gt_qual[i]))
                 else:
-                    fout.write("{0}\t{1}\t{2}\t{3},{4}\t{5},{6},{7},{8},{9}\t{10}\n".format(positions[i],
-                                                                                            1,
-                                                                                            zy_qual[i],
-                                                                                            zy_labels[i].item(),
-                                                                                            zy_output[i],
-                                                                                            zy_output_[i][0],
-                                                                                            zy_output_[i][1],
-                                                                                            zy_output_[i][2],
-                                                                                            zy_output_[i][3],
-                                                                                            zy_output_[i][4],
-                                                                                            gt_qual[i]))
+                    fout.write("{0}\t{1}\t{2}\t{3},{4}\t{5},{6},{7},{8},{9}\t{10},{11}\n".format(positions[i],
+                                                                                                 1,
+                                                                                                 zy_qual[i],
+                                                                                                 zy_labels[i].item(),
+                                                                                                 zy_output[i],
+                                                                                                 zy_output_[i][0],
+                                                                                                 zy_output_[i][1],
+                                                                                                 zy_output_[i][2],
+                                                                                                 zy_output_[i][3],
+                                                                                                 zy_output_[i][4],
+                                                                                                 gt_labels[i].item(),
+                                                                                                 gt_qual[i]))
     fout.close()
 
 
