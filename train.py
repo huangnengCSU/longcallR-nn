@@ -121,43 +121,57 @@ def train3(epoch, config, model, train_dataset, batch_size, optimizer, logger, v
     total_loss = 0
     total_images = 0
     optimizer.epoch()
-    zy_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_class)
-    zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
-    zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
+    zy_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_zy_class)
+    zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_zy_class)
+    zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_zy_class)
+    gt_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_gt_class)
+    gt_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_gt_class)
+    gt_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_gt_class)
     dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
                     collate_fn=lambda batch: train_collate(batch, max_depth_threshold=config.data.max_depth))
     for batch in dl:
-        feature_tensor, zygosity_label = batch
+        feature_tensor, zygosity_label, genotype_label = batch
         feature_tensor = feature_tensor.type(torch.FloatTensor)  # [batch, 2*flanking_size+1, dim]
         feature_tensor = feature_tensor.permute(0, 3, 1, 2)  # [batch, dim, L, W]
         zygosity_label = zygosity_label.type(torch.LongTensor)  # [batch,]
+        genotype_label = genotype_label.type(torch.LongTensor)  # [batch,]
         if config.training.num_gpu > 0:
             feature_tensor = feature_tensor.cuda()
             zygosity_label = zygosity_label.cuda()
+            genotype_label = genotype_label.cuda()
 
-        loss, zy_out = model(feature_tensor, zygosity_label)
+        loss, zy_out, gt_out = model(feature_tensor, zygosity_label, genotype_label)
         optimizer.zero_grad()
         loss.backward()
         total_loss += loss.item()
         grad_norm = nn.utils.clip_grad_norm_(model.parameters(), config.training.max_grad_norm)
         optimizer.step()
         total_images += feature_tensor.shape[0]
-        zy_out = zy_out.cpu().data.contiguous().view(-1, config.model.num_class)
+        zy_out = zy_out.cpu().data.contiguous().view(-1, config.model.num_zy_class)
         zygosity_label = zygosity_label.cpu().data.contiguous().view(-1)
         zy_acc_metric.update(zy_out, zygosity_label)
         zy_f1_metric.update(zy_out, zygosity_label)
         zy_conf_metric.update(zy_out, zygosity_label)
+        gt_out = gt_out.cpu().data.contiguous().view(-1, config.model.num_gt_class)
+        genotype_label = genotype_label.cpu().data.contiguous().view(-1)
+        gt_acc_metric.update(gt_out, genotype_label)
+        gt_f1_metric.update(gt_out, genotype_label)
+        gt_conf_metric.update(gt_out, genotype_label)
 
-        print('\r-Training-Epoch:%d, Global Step:%d | Zygosity Accuracy:%.5f F1-Score:%.5f' % (
-            epoch, optimizer.global_step, float(zy_acc_metric.compute()), float(zy_f1_metric.compute())), end="",
-              flush=True)
+        print(
+            '\r-Training-Epoch:%d, Global Step:%d | Zygosity Accuracy:%.5f F1-Score:%.5f | Genotype Accuracy:%.5f F1-Score:%.5f' % (
+                epoch, optimizer.global_step, float(zy_acc_metric.compute()), float(zy_f1_metric.compute()),
+                float(gt_acc_metric.compute()), float(gt_f1_metric.compute())), end="", flush=True)
     if visualizer is not None:
         visualizer.add_scalar('train_loss', loss.item(), optimizer.global_step)
         visualizer.add_scalar('learn_rate', optimizer.lr, optimizer.global_step)
     batch_zy_acc = float(zy_acc_metric.compute())
     batch_zy_f1 = float(zy_f1_metric.compute())
-    print('\r-Training-Epoch:%d, Global Step:%d | Zygosity Accuracy:%.5f F1-Score:%.5f' % (
-        epoch, optimizer.global_step, batch_zy_acc, batch_zy_f1), end="", flush=True)
+    batch_gt_acc = float(gt_acc_metric.compute())
+    batch_gt_f1 = float(gt_f1_metric.compute())
+    print(
+        '\r-Training-Epoch:%d, Global Step:%d | Zygosity Accuracy:%.5f F1-Score:%.5f | Genotype Accuracy:%.5f F1-Score:%.5f' % (
+            epoch, optimizer.global_step, batch_zy_acc, batch_zy_f1, batch_gt_acc, batch_gt_f1), end="", flush=True)
     print()
 
 
@@ -242,39 +256,56 @@ def eval3(epoch, config, model, validate_dataset, batch_size, logger, visualizer
     model.eval()
     total_loss = 0
     total_images = 0
-    zy_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_class)
-    zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_class)
-    zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_class)
+    zy_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_zy_class)
+    zy_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_zy_class)
+    zy_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_zy_class)
+    gt_acc_metric = Accuracy(task='multiclass', num_classes=config.model.num_gt_class)
+    gt_f1_metric = F1Score(task='multiclass', num_classes=config.model.num_gt_class)
+    gt_conf_metric = ConfusionMatrix(task='multiclass', num_classes=config.model.num_gt_class)
     dl = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False,
                     collate_fn=lambda batch: train_collate(batch, max_depth_threshold=config.data.max_depth))
     for batch in dl:
-        feature_tensor, zygosity_label = batch
+        feature_tensor, zygosity_label, genotype_label = batch
         feature_tensor = feature_tensor.type(torch.FloatTensor)  # [batch, 33, dim]
         feature_tensor = feature_tensor.permute(0, 3, 1, 2)  # [batch, dim, L, W]
         zygosity_label = zygosity_label.type(torch.LongTensor)  # [batch,]
+        genotype_label = genotype_label.type(torch.LongTensor)  # [batch,]
         if config.training.num_gpu > 0:
             feature_tensor = feature_tensor.cuda()
             zygosity_label = zygosity_label.cuda()
+            genotype_label = genotype_label.cuda()
 
-        loss, zy_out = model(feature_tensor, zygosity_label)
+        loss, zy_out, gt_out = model(feature_tensor, zygosity_label, genotype_label)
         total_loss += loss.item()
         total_images += feature_tensor.shape[0]
 
-        zy_out = zy_out.cpu().data.contiguous().view(-1, config.model.num_class)
+        zy_out = zy_out.cpu().data.contiguous().view(-1, config.model.num_zy_class)
         zygosity_label = zygosity_label.cpu().data.contiguous().view(-1)
         zy_acc_metric.update(zy_out, zygosity_label)
         zy_f1_metric.update(zy_out, zygosity_label)
         zy_conf_metric.update(zy_out, zygosity_label)
 
+        gt_out = gt_out.cpu().data.contiguous().view(-1, config.model.num_gt_class)
+        genotype_label = genotype_label.cpu().data.contiguous().view(-1)
+        gt_acc_metric.update(gt_out, genotype_label)
+        gt_f1_metric.update(gt_out, genotype_label)
+        gt_conf_metric.update(gt_out, genotype_label)
+
     avg_loss = total_loss / total_images
     batch_zy_acc = float(zy_acc_metric.compute())
     batch_zy_f1 = float(zy_f1_metric.compute())
+    batch_gt_acc = float(gt_acc_metric.compute())
+    batch_gt_f1 = float(gt_f1_metric.compute())
     if visualizer is not None:
         visualizer.add_scalar('eval_loss', avg_loss, epoch)
         visualizer.add_scalar('zy_accuracy', batch_zy_acc, epoch)
         visualizer.add_scalar('zy_f1score', batch_zy_f1, epoch)
-    print('-Validating-Epoch:%d, | Zygosity Accuracy:%.5f F1-Score:%.5f' % (epoch, batch_zy_acc, batch_zy_f1))
+        visualizer.add_scalar('gt_accuracy', batch_gt_acc, epoch)
+        visualizer.add_scalar('gt_f1score', batch_gt_f1, epoch)
+    print('-Validating-Epoch:%d, | Zygosity Accuracy:%.5f F1-Score:%.5f | Genotype Accuracy:%.5f F1-Score:%.5f' % (
+        epoch, batch_zy_acc, batch_zy_f1, batch_gt_acc, batch_gt_f1))
     print(zy_conf_metric.compute())
+    print(gt_conf_metric.compute())
 
 
 def main():
