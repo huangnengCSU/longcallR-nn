@@ -83,7 +83,8 @@ def save_model2(model, optimizer, config, save_name):
         checkpoint = {
             'resnet': model.module.resnet.state_dict() if multi_gpu else model.resnet.state_dict(),
             'spp': model.module.spp.state_dict() if multi_gpu else model.spp.state_dict(),
-            'fc': model.module.fc.state_dict() if multi_gpu else model.fc.state_dict(),
+            'zy_fc': model.module.zy_fc.state_dict() if multi_gpu else model.zy_fc.state_dict(),
+            'gt_fc': model.module.gt_fc.state_dict() if multi_gpu else model.gt_fc.state_dict(),
             'optimizer': optimizer.state_dict(),
             'epoch': optimizer.current_epoch,
             'step': optimizer.global_step
@@ -91,7 +92,8 @@ def save_model2(model, optimizer, config, save_name):
     else:
         checkpoint = {
             'resnet': model.module.resnet.state_dict() if multi_gpu else model.resnet.state_dict(),
-            'fc': model.module.fc.state_dict() if multi_gpu else model.fc.state_dict(),
+            'zy_fc': model.module.zy_fc.state_dict() if multi_gpu else model.zy_fc.state_dict(),
+            'gt_fc': model.module.gt_fc.state_dict() if multi_gpu else model.gt_fc.state_dict(),
             'optimizer': optimizer.state_dict(),
             'epoch': optimizer.current_epoch,
             'step': optimizer.global_step
