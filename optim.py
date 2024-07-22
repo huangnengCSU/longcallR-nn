@@ -152,6 +152,8 @@ class LabelSmoothingLoss(nn.Module):
         self.class_weights = class_weights if class_weights is not None else torch.ones(classes)
 
     def forward(self, pred, target):
+        device = pred.device
+        self.class_weights = self.class_weights.to(device)
         pred = pred.log_softmax(dim=self.dim)
         with torch.no_grad():
             true_dist = torch.zeros_like(pred)
