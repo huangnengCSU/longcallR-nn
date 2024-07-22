@@ -179,7 +179,7 @@ class ResNetwork(nn.Module):
         gt_logits = self.gt_fc(x)
         gt_loss = self.gt_crit(gt_logits.contiguous().view(-1, self.config.num_gt_class),
                                gt_target.contiguous().view(-1))
-        loss = gt_loss + zy_loss
+        loss = 2.0 * gt_loss + zy_loss
         return loss, zy_logits, gt_logits
 
     def predict(self, x):
