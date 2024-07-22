@@ -146,13 +146,16 @@ class ResNetwork(nn.Module):
             self.spp = SPPLayer(pool_sizes)
             # Compute number of features after SPP
             num_features = self.resnet.layer4[2].conv3.out_channels * sum([size * size for size in pool_sizes])
-            self.fc = nn.Linear(num_features, config.num_class, bias=True)
+            self.zy_fc = nn.Linear(num_features, config.num_zy_class, bias=True)
+            self.gt_fc = nn.Linear(num_features, config.num_gt_class, bias=True)
         else:
-            self.fc = nn.Linear(self.resnet.fc.in_features, config.num_class, bias=True)
+            self.zy_fc = nn.Linear(self.resnet.fc.in_features, config.num_zy_class, bias=True)
+            self.gt_fc = nn.Linear(self.resnet.fc.in_features, config.num_gt_class, bias=True)
 
-        self.zy_crit = LabelSmoothingLoss(config.num_class, 0.1)
+        self.zy_crit = LabelSmoothingLoss(config.num_zy_class, 0.1)
+        self.gt_crit = LabelSmoothingLoss(config.num_gt_class, 0.1)
 
-    def forward(self, x, zy_target):
+    def forward(self, x, zy_target, gt_target):
         x = self.resnet.conv1(x)
         x = self.resnet.bn1(x)
         x = self.resnet.relu(x)
@@ -169,11 +172,15 @@ class ResNetwork(nn.Module):
             x = self.resnet.avgpool(x)
             x = x.reshape(x.size(0), -1)  # Use reshape instead of flatten
 
-        zy_logits = self.fc(x)
-
-        zy_loss = self.zy_crit(zy_logits.contiguous().view(-1, self.config.num_class),
+        zy_logits = self.zy_fc(x)
+        zy_loss = self.zy_crit(zy_logits.contiguous().view(-1, self.config.num_zy_class),
                                zy_target.contiguous().view(-1))
-        return zy_loss, zy_logits
+
+        gt_logits = self.gt_fc(x)
+        gt_loss = self.gt_crit(gt_logits.contiguous().view(-1, self.config.num_gt_class),
+                               gt_target.contiguous().view(-1))
+        loss = gt_loss + zy_loss
+        return loss, zy_logits, gt_logits
 
     def predict(self, x):
         x = self.resnet.conv1(x)
@@ -192,7 +199,9 @@ class ResNetwork(nn.Module):
             x = self.resnet.avgpool(x)
             x = x.reshape(x.size(0), -1)  # Use reshape instead of flatten
 
-        zy_logits = self.fc(x)
+        zy_logits = self.zy_fc(x)
         zy_probs = torch.softmax(zy_logits, dim=1)
-        return zy_probs
 
+        gt_logits = self.gt_fc(x)
+        gt_probs = torch.softmax(gt_logits, dim=1)
+        return zy_probs, gt_probs
