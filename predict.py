@@ -130,13 +130,7 @@ def predict2(model, test_paths, batch_size, max_depth_threshold, output_file, de
                 elif zy_output[i] == 4:
                     gt = "0/0"
                     [ref_base, alt_base] = GT_MAP[gt_output[i]]
-                    if ref_base == 'A' and alt_base != 'G':
-                        print("Warning: {}:{}\t GT:{}\tZY:{}".format(chr, pos, GT_MAP[gt_output[i]], zy_output[i]))
-                        continue
-                    elif ref_base == 'T' and alt_base != 'C':
-                        print("Warning: {}:{}\t GT:{}\tZY:{}".format(chr, pos, GT_MAP[gt_output[i]], zy_output[i]))
-                        continue
-                    else:
+                    if GT_MAP[gt_output[i]] != "AG" and GT_MAP[gt_output[i]] != "TC":
                         print("Warning: {}:{}\t GT:{}\tZY:{}".format(chr, pos, GT_MAP[gt_output[i]], zy_output[i]))
                         continue
                 qual = min(zy_qual[i], gt_qual[i])
@@ -148,7 +142,7 @@ def predict2(model, test_paths, batch_size, max_depth_threshold, output_file, de
                         chr, pos, '.', ref_base, alt_base, qual, 'RefCall', '.', 'GT', gt))
                 elif zy_output[i] == 4:
                     fout.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
-                        chr, pos, '.', ref_base, alt_base, qual, 'RnaEdit', '.', 'GT', gt))
+                        chr, pos, '.', ref_base, ref_base, qual, 'RnaEdit', '.', 'GT', gt))
                 else:
                     raise ValueError("Unexpected zygosity output")
     fout.close()
