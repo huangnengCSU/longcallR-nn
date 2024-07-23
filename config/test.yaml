@@ -26,11 +26,9 @@ training:
   visualization: True
   save_model: test_pileup
 optim:
-  type: LookaheadAdam
-  lr: 0.001
+  type: SGD # SGD, Adam, RMSprop
+  lr: 0.01 # SGD: 0.01, Adam: 0.001, RMSprop: 0.001
   momentum: 0.9
-  nesterov: True
-  decay_ratio: 0.98
-  weight_decay: 0
-  step_size: 10
-  begin_to_adjust_lr: 10
+  weight_decay: 0.0001
+  step_size: 30
+  gamma: 0.1

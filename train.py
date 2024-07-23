@@ -369,10 +369,22 @@ def main():
     logger.info('# the number of parameters in the Encoder: %d' % enc)
     logger.info('# the number of parameters in the ForwardLayer: %d' % fow)
 
-    # optimizer = Optimizer(model.parameters(), config.optim)
-    # optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    if config.optim.type == 'SGD':
+        optimizer = optim.SGD(model.parameters(),
+                              lr=config.optim.lr,
+                              momentum=config.optim.momentum,
+                              weight_decay=config.optim.weight_decay)
+    elif config.optim.type == 'Adam':
+        optimizer = optim.Adam(model.parameters(),
+                               lr=config.optim.lr)
+    elif config.optim.type == 'RMSprop':
+        optimizer = optim.RMSprop(model.parameters(),
+                                  lr=config.optim.lr)
+    else:
+        raise ValueError('Unknown optimizer type: %s' % config.optim.type)
+
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=config.optim.step_size, gamma=config.optim.gamma)
+
     logger.info('Created a %s optimizer.' % config.optim.type)
 
     if opt.mode == 'continue':
