@@ -174,6 +174,7 @@ def train3(epoch, global_step, config, model, train_dataset, batch_size, optimiz
         '\r-Training-Epoch:%d, Global Step:%d | Zygosity Accuracy:%.5f F1-Score:%.5f | Genotype Accuracy:%.5f F1-Score:%.5f' % (
             epoch, global_step, batch_zy_acc, batch_zy_f1, batch_gt_acc, batch_gt_f1), end="", flush=True)
     print()
+    return global_step
 
 
 # def eval(epoch, config, model, validate_dataset, batch_size, logger, visualizer=None):
@@ -368,7 +369,8 @@ def main():
     logger.info('# the number of parameters in the ForwardLayer: %d' % fow)
 
     # optimizer = Optimizer(model.parameters(), config.optim)
-    optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
+    # optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     logger.info('Created a %s optimizer.' % config.optim.type)
 
@@ -391,8 +393,8 @@ def main():
     global_step = 0
     for epoch in range(start_epoch, config.training.epochs):
 
-        train3(epoch, global_step, config, model, training_dataset, config.training.batch_size, optimizer, logger,
-               visualizer)
+        global_step = train3(epoch, global_step, config, model, training_dataset, config.training.batch_size, optimizer,
+                             logger, visualizer)
 
         scheduler.step()
 
