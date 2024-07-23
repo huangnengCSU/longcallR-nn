@@ -144,7 +144,7 @@ def train3(epoch, global_step, config, model, train_dataset, batch_size, optimiz
 
         loss, zy_out, gt_out = model(feature_tensor, zygosity_label, genotype_label)
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), config.training.max_grad_norm)
         optimizer.step()
         global_step += 1
         total_loss += loss.item()
@@ -351,23 +351,12 @@ def main():
 
     model = ResNetwork(config.model)
 
-    if config.training.load_model:
-        checkpoint = torch.load(config.training.load_model)
-        model.encoder.load_state_dict(checkpoint['encoder'])
-        model.forward_layer.load_state_dict(checkpoint['forward_layer'])
-        logger.info('Loaded model from %s' % config.training.load_model)
-
     if config.training.num_gpu > 0:
         model = model.cuda()
         if config.training.num_gpu > 1:
             device_ids = list(range(config.training.num_gpu))
             model = torch.nn.DataParallel(model, device_ids=device_ids)
         logger.info('Loaded the model to %d GPUs' % config.training.num_gpu)
-
-    n_params, enc, fow = count_parameters(model)
-    logger.info('# the number of parameters in the whole model: %d' % n_params)
-    logger.info('# the number of parameters in the Encoder: %d' % enc)
-    logger.info('# the number of parameters in the ForwardLayer: %d' % fow)
 
     if config.optim.type == 'SGD':
         optimizer = optim.SGD(model.parameters(),

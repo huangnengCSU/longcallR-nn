@@ -1,30 +1,26 @@
-configname: test_pileup
+configname: test_config
 data:
   flanking_size: 20
   max_depth: 200
-  train: "hg002_isoseq_chr20_train_images"
-  dev: "hg002_isoseq_chr19_train_images"
+  train: "train"
+  dev: "validate"
   test: "None"
 model:
-  model_name: resnet18  # resnet18, resnet34, resnet50, resnet101, resnet152
+  model_name: resnet50  # resnet18, resnet34, resnet50, resnet101, resnet152
   pretrained: True
   spp: False
   num_zy_class: 5
   num_gt_class: 16
-  dropout: 0.1
+  dropout: 0.5
 training:
-  batch_size: 10
-  use_balance: False
-  validate_use_balance: False
-  load_model: False
-  first_stage: -1
+  batch_size: 64
+  max_grad_norm: 1.0
   eval_or_not: True
   seed: 2024
-  num_gpu: 0
-  epochs: 200
-  max_grad_norm: 20
+  num_gpu: 1
+  epochs: 130
   visualization: True
-  save_model: test_pileup
+  save_model: test_model
 optim:
   type: SGD # SGD, Adam, RMSprop
   lr: 0.01 # SGD: 0.01, Adam: 0.001, RMSprop: 0.001
