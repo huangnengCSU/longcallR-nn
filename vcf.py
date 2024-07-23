@@ -3,6 +3,7 @@ def write_vcf_header(output_file, chromosome_lengths=None):
         "##fileformat=VCFv4.2",
         "##FILTER=<ID=PASS,Description=\"All filters passed\">",
         "##FILTER=<ID=RefCall,Description=\"Reference call\">",
+        "##FILTER=<ID=RnaEdit,Description=\"RNA editing event\">",
         "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
         "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype Quality\">",
         "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read Depth\">",
