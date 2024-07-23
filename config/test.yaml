@@ -32,4 +32,5 @@ optim:
   nesterov: True
   decay_ratio: 0.98
   weight_decay: 0
+  step_size: 10
   begin_to_adjust_lr: 10
