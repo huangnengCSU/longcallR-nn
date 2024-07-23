@@ -370,9 +370,9 @@ def main():
     logger.info('# the number of parameters in the ForwardLayer: %d' % fow)
 
     # optimizer = Optimizer(model.parameters(), config.optim)
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
-    # optimizer = optim.Adam(model.parameters(), lr=0.001)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    # optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
     logger.info('Created a %s optimizer.' % config.optim.type)
 
     if opt.mode == 'continue':
