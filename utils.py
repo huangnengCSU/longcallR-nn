@@ -77,7 +77,7 @@ def save_model(model, optimizer, config, save_name):
     torch.save(checkpoint, save_name)
 
 
-def save_model2(model, optimizer, config, save_name):
+def save_model2(model, config, save_name):
     multi_gpu = True if config.training.num_gpu > 1 else False
     if config.model.spp:
         checkpoint = {
@@ -85,18 +85,12 @@ def save_model2(model, optimizer, config, save_name):
             'spp': model.module.spp.state_dict() if multi_gpu else model.spp.state_dict(),
             'zy_fc': model.module.zy_fc.state_dict() if multi_gpu else model.zy_fc.state_dict(),
             'gt_fc': model.module.gt_fc.state_dict() if multi_gpu else model.gt_fc.state_dict(),
-            'optimizer': optimizer.state_dict(),
-            'epoch': optimizer.current_epoch,
-            'step': optimizer.global_step
         }
     else:
         checkpoint = {
             'resnet': model.module.resnet.state_dict() if multi_gpu else model.resnet.state_dict(),
             'zy_fc': model.module.zy_fc.state_dict() if multi_gpu else model.zy_fc.state_dict(),
             'gt_fc': model.module.gt_fc.state_dict() if multi_gpu else model.gt_fc.state_dict(),
-            'optimizer': optimizer.state_dict(),
-            'epoch': optimizer.current_epoch,
-            'step': optimizer.global_step
         }
 
     torch.save(checkpoint, save_name)

@@ -400,7 +400,7 @@ def main():
             eval3(epoch, config, model, validating_dataset, config.training.batch_size, logger, dev_visualizer)
 
         save_name = os.path.join(exp_name, '%s.epoch%d.chkpt' % (config.training.save_model, epoch))
-        save_model2(model, optimizer, config, save_name)
+        save_model2(model, config, save_name)
         logger.info('Epoch %d model has been saved.' % epoch)
 
     logger.info('The training process is OVER!')
