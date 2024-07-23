@@ -121,7 +121,7 @@ def predict2(model, test_paths, batch_size, max_depth_threshold, output_file, de
                 elif zy_output[i] == 2:
                     gt = "1/1"
                     [ref_base, alt_base] = GT_MAP[gt_output[i]]
-                    if ref_base != alt_base:
+                    if ref_base == alt_base:
                         print("Warning: {}:{}\t GT:{}\tZY:{}".format(chr, pos, GT_MAP[gt_output[i]], zy_output[i]))
                         continue
                 elif zy_output[i] == 3:
