@@ -4,10 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import torch
-import math
-from torch.optim import Optimizer
-
 
 class RAdam(Optimizer):
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, warmup=0):
@@ -78,13 +74,21 @@ class RAdam(Optimizer):
                 if group['weight_decay'] != 0:
                     p.data.add_(p.data, alpha=-group['weight_decay'] * lr)
 
-                # Ensure step_size is a scalar value
-                step_size = lr / (exp_avg_sq.sqrt() / math.sqrt(bias_correction2) + group['eps'])
+                # Calculate step size
+                denom = exp_avg_sq.sqrt() / math.sqrt(bias_correction2) + group['eps']
+
+                # Debugging statements
+                print(f"Denominator tensor: {denom}")
+                print(f"Denominator tensor shape: {denom.shape}")
+
+                # Ensure step_size is a scalar by computing per element scale
+                step_size = lr / denom
 
                 # Debugging statements
                 print(f"Step size tensor: {step_size}")
                 print(f"Step size tensor shape: {step_size.shape}")
 
+                # Ensure step_size is a scalar
                 if step_size.numel() == 1:
                     step_size = step_size.item()  # Convert tensor to scalar if it's a single-element tensor
                 else:
