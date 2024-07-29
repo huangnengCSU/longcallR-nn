@@ -67,34 +67,25 @@ class RAdam(Optimizer):
                 else:
                     lr = group['lr'] / bias_correction1
 
-                # Warmup
+                # Apply warmup if applicable
                 if group['warmup'] > 0 and t <= group['warmup']:
                     lr *= t / group['warmup']
 
+                # Apply weight decay if applicable
                 if group['weight_decay'] != 0:
                     p.data.add_(p.data, alpha=-group['weight_decay'] * lr)
 
                 # Calculate step size
                 denom = exp_avg_sq.sqrt() / math.sqrt(bias_correction2) + group['eps']
 
-                # Debugging statements
-                print(f"Denominator tensor: {denom}")
-                print(f"Denominator tensor shape: {denom.shape}")
-
-                # Ensure step_size is a scalar by computing per element scale
-                step_size = lr / denom
-
-                # Debugging statements
-                print(f"Step size tensor: {step_size}")
-                print(f"Step size tensor shape: {step_size.shape}")
+                # Compute scalar step size by averaging
+                step_size = lr / denom.mean()  # Use mean to reduce denom to a scalar
 
                 # Ensure step_size is a scalar
-                if step_size.numel() == 1:
-                    step_size = step_size.item()  # Convert tensor to scalar if it's a single-element tensor
-                else:
-                    raise ValueError("step_size is not a scalar. Ensure proper calculation.")
+                if isinstance(step_size, torch.Tensor) and step_size.numel() == 1:
+                    step_size = step_size.item()  # Convert tensor to scalar
 
-                # Apply the step
+                # Update parameters
                 p.data.add_(exp_avg, alpha=-step_size)
 
         return loss
