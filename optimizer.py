@@ -4,6 +4,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import torch
+import math
+from torch.optim import Optimizer
+
+
+# Define RAdam
 class RAdam(Optimizer):
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, warmup=0):
         if not 0.0 <= lr:
@@ -75,7 +81,11 @@ class RAdam(Optimizer):
 
                 # Ensure step_size is a scalar value
                 step_size = lr / (exp_avg_sq.sqrt() / math.sqrt(bias_correction2) + group['eps'])
-                step_size = step_size.item()  # Convert tensor to scalar
+
+                if step_size.numel() == 1:
+                    step_size = step_size.item()  # Convert tensor to scalar if it's a single-element tensor
+                else:
+                    raise ValueError("step_size is not a scalar. Ensure proper calculation.")
 
                 # Apply the step
                 p.data.add_(exp_avg, alpha=-step_size)
