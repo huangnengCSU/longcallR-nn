@@ -25,6 +25,11 @@ torch.set_printoptions(
 
 
 def get_lr(optimizer):
+    # Access the base optimizer if the current optimizer is a Lookahead wrapper
+    if hasattr(optimizer, 'optimizer'):
+        optimizer = optimizer.optimizer
+
+    # Now get the learning rate from the base optimizer
     for param_group in optimizer.param_groups:
         return param_group['lr']
 
