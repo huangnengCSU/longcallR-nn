@@ -24,4 +24,4 @@ training:
 optim:
   lr: 0.001 # Radam: 0.001
   weight_decay: 0.0001
-  warmup: 100
+  warmup: 2000
