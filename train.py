@@ -12,6 +12,7 @@ from dataset import TrainDataset3, train_collate
 from utils import AttrDict, init_logger, count_parameters, save_model2
 from tensorboardX import SummaryWriter
 from torchmetrics import Accuracy, Recall, Precision, F1Score, ConfusionMatrix
+from optimizer import RAdam, Lookahead
 
 torch.set_printoptions(
     precision=2,  # 精度，保留小数点后几位，默认4
@@ -146,6 +147,7 @@ def train3(epoch, global_step, config, model, train_dataset, batch_size, optimiz
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), config.training.max_grad_norm)
         optimizer.step()
+        optimizer.optimizer.zero_grad()
         global_step += 1
         total_loss += loss.item()
         total_images += feature_tensor.shape[0]
@@ -357,21 +359,9 @@ def main():
             model = torch.nn.DataParallel(model, device_ids=device_ids)
         logger.info('Loaded the model to %d GPUs' % config.training.num_gpu)
 
-    if config.optim.type == 'SGD':
-        optimizer = optim.SGD(model.parameters(),
-                              lr=config.optim.lr,
-                              momentum=config.optim.momentum,
-                              weight_decay=config.optim.weight_decay)
-    elif config.optim.type == 'Adam':
-        optimizer = optim.Adam(model.parameters(),
-                               lr=config.optim.lr)
-    elif config.optim.type == 'RMSprop':
-        optimizer = optim.RMSprop(model.parameters(),
-                                  lr=config.optim.lr)
-    else:
-        raise ValueError('Unknown optimizer type: %s' % config.optim.type)
-
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=config.optim.step_size, gamma=config.optim.gamma)
+    base_optimizer = RAdam(model.parameters(), lr=config.optim.lr, warmup=config.optim.warmup,
+                           weight_decay=config.optim.weight_decay)
+    optimizer = Lookahead(base_optimizer, alpha=0.5, k=5)
 
     logger.info('Created a %s optimizer.' % config.optim.type)
 
@@ -390,9 +380,6 @@ def main():
 
         global_step = train3(epoch, global_step, config, model, training_dataset, config.training.batch_size, optimizer,
                              logger, visualizer)
-
-        scheduler.step()
-
         if config.training.eval_or_not:
             eval3(epoch, config, model, validating_dataset, config.training.batch_size, logger, dev_visualizer)
 

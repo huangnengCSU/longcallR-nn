@@ -22,9 +22,6 @@ training:
   visualization: True
   save_model: test_model
 optim:
-  type: SGD # SGD, Adam, RMSprop
-  lr: 0.01 # SGD: 0.01, Adam: 0.001, RMSprop: 0.001
-  momentum: 0.9
+  lr: 0.001 # Radam: 0.001
   weight_decay: 0.0001
-  step_size: 30
-  gamma: 0.1
+  warmup: 100

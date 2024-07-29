@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
-from optim import LabelSmoothingLoss
+from optimizer import LabelSmoothingLoss, FocalLoss
 
 
 def weights_init(m):
@@ -152,11 +152,13 @@ class ResNetwork(nn.Module):
             self.zy_fc = nn.Linear(self.resnet.fc.in_features, config.num_zy_class, bias=True)
             self.gt_fc = nn.Linear(self.resnet.fc.in_features, config.num_gt_class, bias=True)
 
-        self.zy_crit = LabelSmoothingLoss(config.num_zy_class, 0.1)
-        gt_class_weights = torch.tensor(
-            [1.0, 3.0, 1.0, 3.0, 3.0, 1.0, 2.0, 1.0, 1.0, 3.0, 1.0, 3.0, 3.0, 1.0, 3.0, 1.0])
-        # self.gt_crit = LabelSmoothingLoss(config.num_gt_class, 0.1)
-        self.gt_crit = LabelSmoothingLoss(config.num_gt_class, 0.1, class_weights=gt_class_weights)
+        # self.zy_crit = LabelSmoothingLoss(config.num_zy_class, 0.1)
+        # gt_class_weights = torch.tensor(
+        #     [1.0, 3.0, 1.0, 3.0, 3.0, 1.0, 2.0, 1.0, 1.0, 3.0, 1.0, 3.0, 3.0, 1.0, 3.0, 1.0])
+        # # self.gt_crit = LabelSmoothingLoss(config.num_gt_class, 0.1)
+        # self.gt_crit = LabelSmoothingLoss(config.num_gt_class, 0.1, class_weights=gt_class_weights)
+        self.zy_crit = FocalLoss(config.num_zy_class, alpha=1.0, gamma=2.0)
+        self.gt_crit = FocalLoss(config.num_gt_class, alpha=1.0, gamma=2.0)
 
     def forward(self, x, zy_target, gt_target):
         x = self.resnet.conv1(x)
@@ -182,7 +184,7 @@ class ResNetwork(nn.Module):
         gt_logits = self.gt_fc(x)
         gt_loss = self.gt_crit(gt_logits.contiguous().view(-1, self.config.num_gt_class),
                                gt_target.contiguous().view(-1))
-        loss = 2.0 * gt_loss + zy_loss
+        loss = gt_loss + zy_loss
         return loss, zy_logits, gt_logits
 
     def predict(self, x):
