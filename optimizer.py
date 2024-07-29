@@ -71,9 +71,13 @@ class RAdam(Optimizer):
                     lr *= t / group['warmup']
 
                 if group['weight_decay'] != 0:
-                    p.data.add_(p.data, alpha=-group['weight_decay'] * group['lr'])
+                    p.data.add_(p.data, alpha=-group['weight_decay'] * lr)
 
+                # Ensure step_size is a scalar value
                 step_size = lr / (exp_avg_sq.sqrt() / math.sqrt(bias_correction2) + group['eps'])
+                step_size = step_size.item()  # Convert tensor to scalar
+
+                # Apply the step
                 p.data.add_(exp_avg, alpha=-step_size)
 
         return loss
