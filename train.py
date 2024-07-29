@@ -315,7 +315,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-config', type=str, help='path to config file', required=True)
     parser.add_argument('-log', type=str, default='train.log', help='name of log file')
-    parser.add_argument('-mode', type=str, default='retrain', help="training mode: retrain or continue")
     opt = parser.parse_args()
 
     configfile = open(opt.config)
@@ -376,13 +375,6 @@ def main():
 
     logger.info('Created a %s optimizer.' % config.optim.type)
 
-    if opt.mode == 'continue':
-        optimizer.load_state_dict(checkpoint['optimizer'])
-        start_epoch = checkpoint['epoch']
-        logger.info('Load Optimizer State!')
-    else:
-        start_epoch = 0
-
     # create a visualizer
     if config.training.visualization:
         visual_log = os.path.join(exp_name, 'log')
@@ -393,6 +385,7 @@ def main():
         visualizer = None
 
     global_step = 0
+    start_epoch = 0
     for epoch in range(start_epoch, config.training.epochs):
 
         global_step = train3(epoch, global_step, config, model, training_dataset, config.training.batch_size, optimizer,
