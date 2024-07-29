@@ -368,8 +368,6 @@ def main():
                            weight_decay=config.optim.weight_decay)
     optimizer = Lookahead(base_optimizer, alpha=0.5, k=5)
 
-    logger.info('Created a %s optimizer.' % config.optim.type)
-
     # create a visualizer
     if config.training.visualization:
         visual_log = os.path.join(exp_name, 'log')
