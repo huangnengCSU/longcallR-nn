@@ -12,6 +12,8 @@ model:
   num_zy_class: 5
   num_gt_class: 16
   dropout: 0.5
+  smoothing: 0.1
+  use_gt_class_weight: True
 training:
   batch_size: 64
   max_grad_norm: 1.0

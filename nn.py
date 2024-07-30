@@ -152,11 +152,13 @@ class ResNetwork(nn.Module):
             self.zy_fc = nn.Linear(self.resnet.fc.in_features, config.num_zy_class, bias=True)
             self.gt_fc = nn.Linear(self.resnet.fc.in_features, config.num_gt_class, bias=True)
 
-        self.zy_crit = LabelSmoothingLoss(config.num_zy_class, 0.1)
-        gt_class_weights = torch.tensor(
-            [1.0, 3.0, 1.0, 3.0, 3.0, 1.0, 2.0, 1.0, 1.0, 3.0, 1.0, 3.0, 3.0, 1.0, 3.0, 1.0])
-        # self.gt_crit = LabelSmoothingLoss(config.num_gt_class, 0.1)
-        self.gt_crit = LabelSmoothingLoss(config.num_gt_class, 0.1, class_weights=gt_class_weights)
+        self.zy_crit = LabelSmoothingLoss(config.num_zy_class, smoothing=config.smoothing)
+        if config.use_gt_class_weight:
+            gt_class_weights = torch.tensor(
+                [1.0, 3.0, 1.0, 3.0, 3.0, 1.0, 2.0, 1.0, 1.0, 3.0, 1.0, 3.0, 3.0, 1.0, 3.0, 1.0])
+            self.gt_crit = LabelSmoothingLoss(config.num_gt_class, 0.1, class_weights=gt_class_weights)
+        else:
+            self.gt_crit = LabelSmoothingLoss(config.num_gt_class, smoothing=config.smoothing)
 
     def forward(self, x, zy_target, gt_target):
         x = self.resnet.conv1(x)
