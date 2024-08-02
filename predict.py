@@ -136,8 +136,8 @@ def predict2(model, test_paths, batch_size, max_depth_threshold, output_file, de
                     gt = "0/0"
                     [ref_base, alt_base] = GT_MAP[gt_output[i]]
                     if GT_MAP[gt_output[i]] != "AG" and GT_MAP[gt_output[i]] != "TC":
-                        print("Warning: {}:{}\t GT:{}\tZY:{}".format(
-                            chr, pos, GT_MAP[gt_output[i]], ZY_MAP[zy_output[i]]))
+                        # print("Warning: {}:{}\t GT:{}\tZY:{}".format(
+                        #     chr, pos, GT_MAP[gt_output[i]], ZY_MAP[zy_output[i]]))
                         continue
                     alt_base = ref_base
                 qual = min(zy_qual[i], gt_qual[i])
