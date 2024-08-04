@@ -139,7 +139,7 @@ def predict2(model, test_paths, batch_size, max_depth_threshold, output_file, de
                         chr, pos, '.', ref_base, alt_base, qual, 'RefCall', '.', 'GT', gt))
                 elif zy_output[i] == 4:
                     fout.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
-                        chr, pos, '.', ref_base, ref_base, qual, 'RnaEdit', '.', 'GT', gt))
+                        chr, pos, '.', ref_base, alt_base, qual, 'RnaEdit', '.', 'GT', gt))
                 else:
                     raise ValueError("Unexpected zygosity output")
     fout.close()
