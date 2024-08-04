@@ -114,32 +114,22 @@ def predict2(model, test_paths, batch_size, max_depth_threshold, output_file, de
             for i in range(len(positions)):
                 chr = positions[i].split(':')[0]
                 pos = positions[i].split(':')[1]
+                [ref_base, alt_base] = GT_MAP[gt_output[i]]
+                if ref_base == alt_base:
+                    continue
                 if zy_output[i] == 0:
                     gt = "0/0"
-                    [ref_base, alt_base] = GT_MAP[gt_output[i]]
-                    if ref_base != alt_base:
-                        alt_base = ref_base
                 elif zy_output[i] == 1:
                     gt = "0/1"
-                    [ref_base, alt_base] = GT_MAP[gt_output[i]]
-                    if ref_base == alt_base:
-                        gt = "0/0"
                 elif zy_output[i] == 2:
                     gt = "1/1"
-                    [ref_base, alt_base] = GT_MAP[gt_output[i]]
-                    if ref_base == alt_base:
-                        gt = "0/0"
                 elif zy_output[i] == 3:
-                    gt = "1/2"
+                    # TODO: how to handle 1/2 zygosity, currently we skip it
                     continue
                 elif zy_output[i] == 4:
                     gt = "0/0"
-                    [ref_base, alt_base] = GT_MAP[gt_output[i]]
                     if GT_MAP[gt_output[i]] != "AG" and GT_MAP[gt_output[i]] != "TC":
-                        # print("Warning: {}:{}\t GT:{}\tZY:{}".format(
-                        #     chr, pos, GT_MAP[gt_output[i]], ZY_MAP[zy_output[i]]))
                         continue
-                    alt_base = ref_base
                 qual = min(zy_qual[i], gt_qual[i])
                 if zy_output[i] == 1 or zy_output[i] == 2 or zy_output[i] == 3:
                     fout.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
