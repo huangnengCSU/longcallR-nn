@@ -267,12 +267,22 @@ class TrainDataset3(Dataset):
                     gt_labels.append(int(fields[1]))
                     label_positions.append(fields[2])
 
-            all_feature_positions.extend(feature_positions)
-            all_zy_labels.extend(zy_labels)
-            all_gt_labels.extend(gt_labels)
-            all_label_positions.extend(label_positions)
-            for feature_pos in feature_positions:
+            # all_feature_positions.extend(feature_positions)
+            # all_zy_labels.extend(zy_labels)
+            # all_gt_labels.extend(gt_labels)
+            # all_label_positions.extend(label_positions)
+            # for feature_pos in feature_positions:
+            #     all_data[feature_pos] = data[feature_pos]
+
+            for i in range(len(feature_positions)):
+                feature_pos = feature_positions[i]
+                if data[feature_pos].shape[1] == 0:
+                    continue
                 all_data[feature_pos] = data[feature_pos]
+                all_feature_positions.append(feature_pos)
+                all_zy_labels.append(zy_labels[i])
+                all_gt_labels.append(gt_labels[i])
+                all_label_positions.append(label_positions[i])
 
         self.data = all_data
         self.feature_positions = all_feature_positions
@@ -348,11 +358,27 @@ class EvalDataset2(Dataset):
                 gt_labels.append(int(fields[1]))
                 label_positions.append(fields[2])
 
-        self.data = data
-        self.feature_positions = feature_positions
-        self.zy_labels = zy_labels
-        self.gt_labels = gt_labels
-        self.label_positions = label_positions
+        valid_data = {}
+        valid_feature_positions = []
+        valid_label_positions = []
+        valid_zy_labels = []
+        valid_gt_labels = []
+
+        for i in range(len(feature_positions)):
+            feature_pos = feature_positions[i]
+            if data[feature_pos].shape[1] == 0:
+                continue
+            valid_data[feature_pos] = data[feature_pos]
+            valid_feature_positions.append(feature_pos)
+            valid_label_positions.append(label_positions[i])
+            valid_zy_labels.append(zy_labels[i])
+            valid_gt_labels.append(gt_labels[i])
+
+        self.data = valid_data
+        self.feature_positions = valid_feature_positions
+        self.zy_labels = valid_zy_labels
+        self.gt_labels = valid_gt_labels
+        self.label_positions = valid_label_positions
 
     def __getitem__(self, i):
         feature_pos = self.feature_positions[i]
@@ -439,8 +465,17 @@ class PredictDataset2(Dataset):
     def __init__(self, datapath):
         data = np.load(datapath)
         feature_positions = data.files
-        self.data = data
-        self.feature_positions = feature_positions
+        valid_data = {}
+        valid_feature_positions = []
+        for i in range(len(feature_positions)):
+            feature_pos = feature_positions[i]
+            if data[feature_pos].shape[1] == 0:
+                continue
+            valid_data[feature_pos] = data[feature_pos]
+            valid_feature_positions.append(feature_pos)
+
+        self.data = valid_data
+        self.feature_positions = valid_feature_positions
 
     def __getitem__(self, i):
         feature_pos = self.feature_positions[i]
@@ -609,12 +644,11 @@ if __name__ == '__main__':
     #         print("Epoch ", epoch, ":", feature_matrices.shape)
     #     epoch += 1
 
-    filepaths = [opt.data + '/' + file for file in os.listdir(opt.data) if file.endswith('.npz')]
-    for file in filepaths:
-        dataset = PredictDataset2(file)
-        max_depth_threshold = 2000
-        dl = DataLoader(dataset, batch_size=100, shuffle=True,
-                        collate_fn=lambda batch: predict_collate(batch, max_depth_threshold=max_depth_threshold))
-        for batch in dl:
-            positions, feature_matrices = batch
-            print(feature_matrices.shape)
+    file = opt.data
+    dataset = PredictDataset2(file)
+    max_depth_threshold = 2000
+    dl = DataLoader(dataset, batch_size=2, shuffle=True,
+                    collate_fn=lambda batch: predict_collate(batch, max_depth_threshold=max_depth_threshold))
+    for batch in dl:
+        positions, feature_matrices = batch
+        print(feature_matrices.shape)
