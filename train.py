@@ -14,12 +14,12 @@ from tensorboardX import SummaryWriter
 from torchmetrics import Accuracy, Recall, Precision, F1Score, ConfusionMatrix
 
 torch.set_printoptions(
-    precision=2,  # 精度，保留小数点后几位，默认4
+    precision=2,
     threshold=1000,
     edgeitems=3,
-    linewidth=300,  # 每行最多显示的字符数，默认80，超过则换行显示
+    linewidth=300,
     profile=None,
-    sci_mode=False  # 用科学技术法显示数据，默认True
+    sci_mode=False
 )
 
 
