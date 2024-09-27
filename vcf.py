@@ -1,3 +1,12 @@
+import pysam
+
+def get_chromosome_lengths(ref_file):
+    fasta = pysam.FastaFile(ref_file)
+    lengths = {chrom: fasta.get_reference_length(chrom) for chrom in fasta.references}
+    return lengths
+
+
+
 def write_vcf_header(output_file, chromosome_lengths=None):
     header_lines = [
         "##fileformat=VCFv4.2",
