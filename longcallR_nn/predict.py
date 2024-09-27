@@ -149,6 +149,26 @@ def predict2(model, test_paths, batch_size, max_depth_threshold, ref_file, outpu
     fout.close()
 
 
+def call_process(opt):
+    device = torch.device('cuda' if not opt.no_cuda else 'cpu')
+    configfile = open(opt.config)
+    config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
+    pred_model = ResNetwork(config.model).to(device)
+    checkpoint = torch.load(opt.model, map_location=device)
+    if config.model.spp:
+        pred_model.resnet.load_state_dict(checkpoint['resnet'])
+        pred_model.spp.load_state_dict(checkpoint['spp'])
+        pred_model.zy_fc.load_state_dict(checkpoint['zy_fc'])
+        pred_model.gt_fc.load_state_dict(checkpoint['gt_fc'])
+    else:
+        pred_model.resnet.load_state_dict(checkpoint['resnet'])
+        pred_model.zy_fc.load_state_dict(checkpoint['zy_fc'])
+        pred_model.gt_fc.load_state_dict(checkpoint['gt_fc'])
+    testing_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
+    # predict_dataset = PredictDataset(testing_paths, config.data.flanking_size)
+    predict2(pred_model, testing_paths, opt.batch_size, opt.max_depth, opt.ref, opt.output, device)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-config', type=str, required=True, help='path to config file')

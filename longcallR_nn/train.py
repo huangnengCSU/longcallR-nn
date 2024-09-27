@@ -311,6 +311,94 @@ def eval3(epoch, config, model, validate_dataset, batch_size, logger, visualizer
     print(gt_conf_metric.compute())
 
 
+def train_process(opt):
+    configfile = open(opt.config)
+    config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
+
+    exp_name = os.path.join('egs', config.configname, 'exp', config.training.save_model)
+    if not os.path.isdir(exp_name):
+        os.makedirs(exp_name)
+    logger = init_logger(os.path.join(exp_name, opt.log))
+
+    shutil.copyfile(opt.config, os.path.join(exp_name, 'config.yaml'))
+    logger.info('Save config info.')
+
+    num_workers = config.training.num_gpu * 2
+    if config.data.dev != "None":
+        # training_paths = [config.data.train + '/' + fn for fn in os.listdir(config.data.train) if fn.endswith('.npz')]
+        # validating_paths = [config.data.dev + '/' + fn for fn in os.listdir(config.data.dev) if fn.endswith('.npz')]
+        validating_dataset = TrainDataset3(config.data.dev)
+        logger.info("Load validating dataset from %s" % config.data.dev)
+        training_dataset = TrainDataset3(config.data.train)
+        logger.info("Load training dataset from %s" % config.data.train)
+        # train_dataset = TrainDataset(training_paths, config.data.flanking_size)
+        # validate_dataset = TrainDataset(validating_paths, config.data.flanking_size)
+    else:
+        filelist = [config.data.train + '/' + fb for fb in os.listdir(config.data.train) if fb.endswith('.npz')]
+        np.random.shuffle(filelist)
+        filelist_size = len(filelist)
+        training_paths = filelist[:int(filelist_size * 0.9)]  # 90% for training
+        validating_paths = filelist[int(filelist_size * 0.9):]  # 10% for testing
+        assert len(validating_paths) > 0
+        # train_dataset = TrainDataset(training_paths, config.data.flanking_size)
+        # validate_dataset = TrainDataset(validating_paths, config.data.flanking_size)
+
+    model = ResNetwork(config.model)
+
+    if config.training.num_gpu > 0:
+        model = model.cuda()
+        if config.training.num_gpu > 1:
+            device_ids = list(range(config.training.num_gpu))
+            model = torch.nn.DataParallel(model, device_ids=device_ids)
+        logger.info('Loaded the model to %d GPUs' % config.training.num_gpu)
+
+    if config.optim.type == 'SGD':
+        optimizer = optim.SGD(model.parameters(),
+                              lr=config.optim.lr,
+                              momentum=config.optim.momentum,
+                              weight_decay=config.optim.weight_decay)
+    elif config.optim.type == 'Adam':
+        optimizer = optim.Adam(model.parameters(),
+                               lr=config.optim.lr)
+    elif config.optim.type == 'RMSprop':
+        optimizer = optim.RMSprop(model.parameters(),
+                                  lr=config.optim.lr)
+    else:
+        raise ValueError('Unknown optimizer type: %s' % config.optim.type)
+
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=config.optim.step_size, gamma=config.optim.gamma)
+
+    logger.info('Created a %s optimizer.' % config.optim.type)
+
+    # create a visualizer
+    if config.training.visualization:
+        visual_log = os.path.join(exp_name, 'log')
+        visualizer = SummaryWriter(os.path.join(visual_log, 'train'))
+        dev_visualizer = SummaryWriter(os.path.join(visual_log, 'dev'))
+        logger.info('Created a visualizer.')
+    else:
+        visualizer = None
+
+    global_step = 0
+    start_epoch = 0
+    for epoch in range(start_epoch, config.training.epochs):
+
+        global_step = train3(epoch, global_step, config, model, training_dataset, config.training.batch_size, optimizer,
+                             logger, visualizer)
+
+        scheduler.step()
+
+        if config.training.eval_or_not:
+            eval3(epoch, config, model, validating_dataset, config.training.batch_size, logger, dev_visualizer)
+
+        save_name = os.path.join(exp_name, '%s.epoch%d.chkpt' % (config.training.save_model, epoch))
+        save_model2(model, config, save_name)
+        logger.info('Epoch %d model has been saved.' % epoch)
+
+    logger.info('The training process is OVER!')
+
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-config', type=str, help='path to config file', required=True)
