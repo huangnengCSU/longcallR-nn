@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from nn import ResNetwork
 from dataset import PredictDataset2, predict_collate
 from utils import AttrDict
-from vcf import write_vcf_header
+from vcf import write_vcf_header, get_chromosome_lengths
 import math
 
 GT_MAP = {
@@ -87,9 +87,13 @@ def calculate_score(probabilities):
 #     fout.close()
 
 
-def predict2(model, test_paths, batch_size, max_depth_threshold, output_file, device):
+def predict2(model, test_paths, batch_size, max_depth_threshold, ref_file, output_file, device):
     model.eval()
-    write_vcf_header(output_file)
+    if ref_file is not None:
+        chomosome_lengths = get_chromosome_lengths(ref_file)
+        write_vcf_header(output_file, chomosome_lengths)
+    else:
+        write_vcf_header(output_file)
     fout = open(output_file, 'a')
     for file in test_paths:
         test_dataset = PredictDataset2(file)
@@ -151,6 +155,7 @@ def main():
     parser.add_argument('-model', required=True, help='path to trained model')
     parser.add_argument('-data', required=True, help='directory of feature files')
     # parser.add_argument('-contig', required=True, help='contig name of the input bin files')
+    parser.add_argument('-ref', required=False, default=None, help='reference genome file')
     parser.add_argument('-output', required=True, help='output vcf file')
     parser.add_argument('-max_depth', type=int, default=2000, help='max depth threshold')
     parser.add_argument('-batch_size', type=int, default=1000, help='batch size')
@@ -172,7 +177,7 @@ def main():
         pred_model.gt_fc.load_state_dict(checkpoint['gt_fc'])
     testing_paths = [opt.data + '/' + fname for fname in os.listdir(opt.data) if fname.endswith('.npz')]
     # predict_dataset = PredictDataset(testing_paths, config.data.flanking_size)
-    predict2(pred_model, testing_paths, opt.batch_size, opt.max_depth, opt.output, device)
+    predict2(pred_model, testing_paths, opt.batch_size, opt.max_depth, opt.ref, opt.output, device)
 
 
 if __name__ == '__main__':
