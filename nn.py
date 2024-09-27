@@ -2,105 +2,30 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
-from optim import LabelSmoothingLoss
 
+class LabelSmoothingLoss(nn.Module):
+    def __init__(self, classes, smoothing=0.0, dim=-1, class_weights=None):
+        super(LabelSmoothingLoss, self).__init__()
+        self.confidence = 1.0 - smoothing
+        self.smoothing = smoothing
+        self.cls = classes
+        self.dim = dim
+        self.class_weights = class_weights if class_weights is not None else torch.ones(classes)
 
-def weights_init(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
-        m.weight.data.normal_(0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
-        m.weight.data.normal_(1.0, 0.02)
-        m.bias.data.fill_(0)
+    def forward(self, pred, target):
+        device = pred.device
+        self.class_weights = self.class_weights.to(device)
+        pred = pred.log_softmax(dim=self.dim)
+        with torch.no_grad():
+            true_dist = torch.zeros_like(pred)
+            true_dist.fill_(self.smoothing / (self.cls - 1))
+            true_dist.scatter_(1, target.data.unsqueeze(1), self.confidence)
 
+        # Apply class weights
+        class_weights = self.class_weights[target.data].unsqueeze(1)
+        loss = torch.sum(-true_dist * pred, dim=self.dim) * class_weights.squeeze()
 
-class BaseEncoder(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, n_layers, dropout=0.2, bidirectional=True):
-        super(BaseEncoder, self).__init__()
-
-        self.lstm = nn.LSTM(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            num_layers=n_layers,
-            batch_first=True,
-            dropout=dropout,
-            bidirectional=bidirectional
-        )
-
-        self.output_proj = nn.Linear(2 * hidden_size if bidirectional else hidden_size,
-                                     output_size,
-                                     bias=True)
-
-    def forward(self, inputs):
-        assert inputs.dim() == 3
-
-        self.lstm.flatten_parameters()
-        outputs, hidden = self.lstm(inputs)
-
-        logits = self.output_proj(outputs)  # N, L, output_size
-
-        return logits, hidden
-
-
-def build_encoder(config):
-    if config.enc.type == 'lstm':
-        return BaseEncoder(
-            input_size=config.feature_dim,
-            hidden_size=config.enc.hidden_size,
-            output_size=config.enc.output_size,
-            n_layers=config.enc.n_layers,
-            dropout=config.dropout,
-            bidirectional=config.enc.bidirectional
-        )
-    else:
-        raise NotImplementedError
-
-
-class ForwardLayer(nn.Module):
-    def __init__(self, input_size, inner_size, zy_class):
-        super(ForwardLayer, self).__init__()
-        self.dense = nn.Linear(input_size, inner_size, bias=True)
-        self.tanh = nn.Tanh()
-        self.zygosity_layer = nn.Linear(inner_size, zy_class, bias=True)
-
-    def forward(self, inputs):
-        out = self.tanh(self.dense(inputs))  # [batch, length, hidden*2]
-        out = out[:, 16, :]  # [batch, hidden*2]
-        zy_outputs = self.zygosity_layer(out)
-        return zy_outputs
-
-
-def build_forward(config):
-    return ForwardLayer(config.enc.output_size,
-                        config.joint.inner_size,
-                        config.num_class)
-
-
-class LSTMNetwork(nn.Module):
-    def __init__(self, config):
-        super(LSTMNetwork, self).__init__()
-        # define encoder
-        self.config = config
-        self.encoder = build_encoder(config)
-        self.forward_layer = build_forward(config)
-        self.zy_crit = LabelSmoothingLoss(config.num_class, 0.1)
-
-    def forward(self, inputs, zy_target):
-        # inputs: N x L x c
-        enc_state, _ = self.encoder(inputs)  # [N, L, o]
-        zy_logits = self.forward_layer(enc_state)
-        zy_loss = self.zy_crit(zy_logits.contiguous().view(-1, self.config.num_class),
-                               zy_target.contiguous().view(-1))
-        loss = zy_loss
-
-        return loss, zy_logits
-
-    def predict(self, inputs):
-        enc_state, _ = self.encoder(inputs)  # [N, L, o]
-        zy_logits = self.forward_layer(enc_state)
-        zy_logits = torch.softmax(zy_logits, 1)
-        return zy_logits
-
+        return torch.mean(loss)
 
 class SPPLayer(nn.Module):
     def __init__(self, pool_sizes):
