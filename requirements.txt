@@ -1,0 +1,7 @@
+python>=3.8
+numpy
+pyyaml
+pysam
+tensorboardx
+torchmetrics
+pytorch>=1.3.0
