@@ -27,7 +27,11 @@
     ```bash
     pip install -r requirements.txt
     ```
-4. Build longcallR-dp:
+4. Install longcallR-nn:
+    ```bash
+    pip install .
+    ```
+5. Compile longcallR-dp:
     ```bash
     cd longcallR_dp
     cargo build --release
