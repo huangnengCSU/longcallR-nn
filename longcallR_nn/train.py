@@ -7,11 +7,11 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import numpy as np
-from nn import ResNetwork
-from dataset import TrainDataset3, train_collate
-from utils import AttrDict, init_logger, count_parameters, save_model2
 from tensorboardX import SummaryWriter
 from torchmetrics import Accuracy, Recall, Precision, F1Score, ConfusionMatrix
+from .nn import ResNetwork
+from .dataset import TrainDataset3, train_collate
+from .utils import AttrDict, init_logger, count_parameters, save_model2
 
 torch.set_printoptions(
     precision=2,

@@ -3,12 +3,13 @@ import os
 import yaml
 import torch
 import numpy as np
-from torch.utils.data import DataLoader
-from nn import ResNetwork
-from dataset import PredictDataset2, predict_collate
-from utils import AttrDict
-from vcf import write_vcf_header, get_chromosome_lengths
 import math
+from torch.utils.data import DataLoader
+from .nn import ResNetwork
+from .dataset import PredictDataset2, predict_collate
+from .utils import AttrDict
+from .vcf import write_vcf_header, get_chromosome_lengths
+
 
 GT_MAP = {
     0: "AA",

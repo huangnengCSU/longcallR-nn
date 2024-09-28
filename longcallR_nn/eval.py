@@ -5,9 +5,9 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from math import log, e
-from nn import ResNetwork
-from dataset import EvalDataset2, eval_collate
-from utils import AttrDict
+from .nn import ResNetwork
+from .dataset import EvalDataset2, eval_collate
+from .utils import AttrDict
 
 
 def calculate_score(probability):

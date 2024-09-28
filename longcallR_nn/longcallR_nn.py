@@ -1,8 +1,8 @@
 import sys
 import argparse
-from _version import __version__
-from train import train_process
-from predict import call_process
+from ._version import __version__
+from .train import train_process
+from .predict import call_process
 
 def main():
     parser = argparse.ArgumentParser(description='longcallR_nn: a deep learning based variant caller for long-reads RNA-seq data')
