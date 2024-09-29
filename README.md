@@ -76,6 +76,11 @@ done
     ```
 3. Install the longcallR-nn dependencies:
     ```bash
+    # create
+    conda create -n longcallRenv python=3.8
+    # activate
+    conda activate longcallRenv
+    # install dependencies
     pip install -r requirements.txt
     ```
 4. Install longcallR-nn:
