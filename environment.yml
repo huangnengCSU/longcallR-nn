@@ -1,0 +1,13 @@
+namne: longcallRenv
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.8
+  - parallel
+  - numpy
+  - pyyaml
+  - pysam
+  - tensorboardX
+  - torchmetrics
