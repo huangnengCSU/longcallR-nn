@@ -63,7 +63,7 @@ done
 ## Installation
 
 ### Prerequisites
-- [Python, Rust, Parallel]
+- [Python, [Rust](https://www.rust-lang.org/), Parallel]
 
 ### Install
 1. Clone the repo:
@@ -76,12 +76,13 @@ done
     ```
 3. Install the longcallR-nn dependencies:
     ```bash
-    # create
-    conda create -n longcallRenv python=3.8
-    # activate
+    # create env
+    conda env create -f environment.yml
+    # activate env
     conda activate longcallRenv
-    # install dependencies
-    pip install -r requirements.txt
+    # select one of the following commands to install PyTorch (version 1.3.0 or higher)
+    conda install pytorch torchvision torchaudio pytorch-cuda -c pytorch -c nvidia
+    conda install pytorch torchvision torchaudio cpuonly -c pytorch
     ```
 4. Install longcallR-nn:
     ```bash
