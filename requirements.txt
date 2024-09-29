@@ -1,4 +1,5 @@
 python>=3.8
+parallel
 numpy
 pyyaml
 pysam
