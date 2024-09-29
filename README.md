@@ -1,5 +1,55 @@
 # <longcallR-nn>
 
+## Quick Run
+```bash
+## path to longcallR-dp, e.g. "/path/to/longcallR-dp"
+cmd="/path/to/longcallR-dp"
+## path to bam file, e.g. "path/to/aln.bam"
+bam="demo/hg002_chr22.bam"
+## path to reference genome, e.g. "/path/to/GRCh38.fa"
+ref="demo/chr22.fa"
+## output_path + prefix, e.g. "sample_longcallR_inference/contig"
+out="hg002_chr22_feature/contig"
+## minimum depth, default="6"
+depth="6"
+## minimum alternative allele fraction, default="0.1"
+alt_frac="0.1"
+## minimum base quality, hifi:0, ont:10, default="0"
+min_bq="0"
+## n_jobs, default="25"
+n_jobs="1"
+## threads, default="8"
+threads="4"
+## contigs, default="chr1 chr2 ... chr22, chrX chrY"
+CTGS=("chr22")
+
+
+## run longcallR-dp (Parallel)
+parallel -j ${n_jobs} \
+    "$cmd --mode predict \
+    --bam-path '${bam}' \
+    --ref-path '${ref}' \
+    --min-depth '${depth}' \
+    --min-alt-freq '${alt_frac}' \
+    --min-baseq '${min_bq}' \
+    --threads '${threads}' \
+    --contigs {1} \
+    --output '${out}_{1}'" ::: "${CTGS[@]}"
+
+
+## run longcallR-nn (Serial)
+for ctg in "${CTGS[@]}"; do
+    longcallR_nn call \
+    -config config/hg002_na24385_masseq.yaml \
+    -model models/hg002_na24385_mix_nopass_resnet50_sgd.epoch30.chkpt \
+    -data ${out}_${ctg} \
+    -ref ${ref} \
+    -output hg002_chr22.vcf \
+    -max_depth 200 \
+    -batch_size 500
+done
+```
+
 ## Table of Contents
 - [Introduction](#introduction)
 - [Install](#install)
@@ -12,7 +62,7 @@
 ## Installation
 
 ### Prerequisites
-- [Python, Rust]
+- [Python, Rust, Parallel]
 
 ### Install
 1. Clone the repo:
@@ -39,8 +89,8 @@
 
 ## Usage
 
-### longcallR-dp
-Template scripts for generating training dataset or inference dataset can be found in the `longcallR_dp/job_templates` directory.
+### longcallR-dp extract training or inference dataset
+Template scripts for generating training dataset or inference dataset can be found in the `longcallR_dp/job_templates` directory. The script for generating a [REDIportal](http://srv00.recas.ba.infn.it/atlas) VCF file for training A-to-I RNA-editing events is located at `longcallR_dp/scripts/REDIportal_to_vcf.py`.
 ```bash
 Usage: longcallR_dp [OPTIONS] --bam-path <BAM_PATH> --ref-path <REF_PATH> --mode <MODE> --output <OUTPUT>
 
