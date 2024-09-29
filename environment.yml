@@ -1,4 +1,4 @@
-namne: longcallRenv
+name: longcallRenv
 channels:
   - conda-forge
   - bioconda
