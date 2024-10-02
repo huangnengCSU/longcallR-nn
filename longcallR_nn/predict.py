@@ -154,7 +154,7 @@ def call_process(opt):
     device = torch.device('cuda' if not opt.no_cuda else 'cpu')
     configfile = open(opt.config)
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
-    pred_model = ResNetwork(config.model).to(device)
+    pred_model = ResNetwork(config.model, inference=True).to(device)
     checkpoint = torch.load(opt.model, map_location=device)
     if config.model.spp:
         pred_model.resnet.load_state_dict(checkpoint['resnet'])
@@ -185,7 +185,7 @@ def main():
     device = torch.device('cuda' if not opt.no_cuda else 'cpu')
     configfile = open(opt.config)
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
-    pred_model = ResNetwork(config.model).to(device)
+    pred_model = ResNetwork(config.model, inference=True).to(device)
     checkpoint = torch.load(opt.model, map_location=device)
     if config.model.spp:
         pred_model.resnet.load_state_dict(checkpoint['resnet'])

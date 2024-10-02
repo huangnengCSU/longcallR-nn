@@ -43,23 +43,37 @@ class SPPLayer(nn.Module):
 
 
 class ResNetwork(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, inference=False):
         super(ResNetwork, self).__init__()
         self.config = config
 
         # Select the correct ResNet model
-        if config.model_name == 'resnet18':
-            self.resnet = models.resnet18(pretrained=config.pretrained)
-        elif config.model_name == 'resnet34':
-            self.resnet = models.resnet34(pretrained=config.pretrained)
-        elif config.model_name == 'resnet50':
-            self.resnet = models.resnet50(pretrained=config.pretrained)
-        elif config.model_name == 'resnet101':
-            self.resnet = models.resnet101(pretrained=config.pretrained)
-        elif config.model_name == 'resnet152':
-            self.resnet = models.resnet152(pretrained=config.pretrained)
+        if inference:
+            if config.model_name == 'resnet18':
+                self.resnet = models.resnet18(pretrained=False)
+            elif config.model_name == 'resnet34':
+                self.resnet = models.resnet34(pretrained=False)
+            elif config.model_name == 'resnet50':
+                self.resnet = models.resnet50(pretrained=False)
+            elif config.model_name == 'resnet101':
+                self.resnet = models.resnet101(pretrained=False)
+            elif config.model_name == 'resnet152':
+                self.resnet = models.resnet152(pretrained=False)
+            else:
+                raise ValueError("Unexpected model name")
         else:
-            raise ValueError("Unexpected model name")
+            if config.model_name == 'resnet18':
+                self.resnet = models.resnet18(pretrained=config.pretrained)
+            elif config.model_name == 'resnet34':
+                self.resnet = models.resnet34(pretrained=config.pretrained)
+            elif config.model_name == 'resnet50':
+                self.resnet = models.resnet50(pretrained=config.pretrained)
+            elif config.model_name == 'resnet101':
+                self.resnet = models.resnet101(pretrained=config.pretrained)
+            elif config.model_name == 'resnet152':
+                self.resnet = models.resnet152(pretrained=config.pretrained)
+            else:
+                raise ValueError("Unexpected model name")
 
         # Adjust the first convolutional layer to accept 7 input channels
         self.resnet.conv1 = nn.Conv2d(7, 64, kernel_size=7, stride=2, padding=3, bias=False)
