@@ -12,22 +12,28 @@ From: nvidia/cuda:11.6.1-devel-ubuntu20.04
     # Install Miniconda
     wget https://repo.anaconda.com/miniconda/Miniconda3-py38_23.11.0-2-Linux-x86_64.sh -O /tools/miniconda3.sh
     bash /tools/miniconda3.sh -b -p /tools/miniconda3
-    export PATH=/tools/miniconda3/bin:$PATH
+    rm /tools/miniconda3.sh
 
-    # Install Rust
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    export PATH=$HOME/.cargo/bin:$PATH
+    # Initialize conda and add it to the PATH
+    export PATH=/tools/miniconda3/bin:$PATH
+    /tools/miniconda3/bin/conda init bash
+    /tools/miniconda3/bin/conda create -n pytorch python=3.9 -y
 
     # Install longcallR-nn
     git clone https://github.com/huangnengCSU/longcallR-nn.git /tools/longcallR-nn
     cd /tools/longcallR-nn
-    pip install -r requirements.txt
-    pip install .
+    /tools/miniconda3/bin/conda run -n pytorch pip install -r requirements.txt
+    /tools/miniconda3/bin/conda run -n pytorch pip install .
 
     # Install torch-gpu
-    conda install pytorch torchvision torchaudio torchmetrics pytorch-cuda=11.6 -c pytorch -c nvidia -y
+    /tools/miniconda3/bin/conda run -n pytorch conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.6 torchmetrics -c pytorch -c nvidia -y
     # Install torch-cpu
     # conda install pytorch torchvision torchaudio torchmetrics cpuonly -c pytorch -y
+
+
+    # Install Rust
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    export PATH=$HOME/.cargo/bin:$PATH
 
     # Compile longcallR-dp
     cd /tools/longcallR-nn/longcallR_dp
@@ -36,6 +42,7 @@ From: nvidia/cuda:11.6.1-devel-ubuntu20.04
 
 %environment
     export PATH=/tools/miniconda3/bin:$PATH
+    . /tools/miniconda3/bin/activate pytorch
     export PATH=$HOME/.cargo/bin:$PATH
     export PATH=/tools/longcallR-nn/longcallR_dp/target/release:$PATH
 
