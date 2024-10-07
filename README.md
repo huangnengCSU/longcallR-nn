@@ -96,6 +96,13 @@ done
     cargo build --release
     ```
 
+### Apptainer
+You may also build an [Apptainer/Singularity](https://apptainer.org/docs/admin/main/installation.html) container using the definition file `longcallR-nn.def`.
+```bash
+cd longcallR-nn
+apptainer build --fakeroot longcallR-nn.sif longcallR-nn.def
+```
+
 ## Usage
 
 ### longcallR-dp extract training or inference dataset
