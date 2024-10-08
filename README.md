@@ -44,7 +44,7 @@ for ctg in "${CTGS[@]}"; do
     -model models/hg002_na24385_mix_nopass_resnet50_sgd.epoch30.chkpt \
     -data ${out}_${ctg} \
     -ref ${ref} \
-    -output hg002_chr22.vcf \
+    -output hg002_${ctg}.vcf \
     -max_depth 200 \
     -batch_size 500
 done
