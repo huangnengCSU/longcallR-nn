@@ -40,6 +40,10 @@ From: nvidia/cuda:11.6.1-devel-ubuntu20.04
     cargo build --release
     export PATH=/tools/longcallR-nn/longcallR_dp/target/release:$PATH
 
+    # Clean up
+    apt-get clean
+    /tools/miniconda3/bin/conda clean -a -y
+
 %environment
     export PATH=/tools/miniconda3/bin:$PATH
     . /tools/miniconda3/bin/activate pytorch
