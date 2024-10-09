@@ -96,11 +96,27 @@ done
     cargo build --release
     ```
 
-### Apptainer
-You may also build an [Apptainer/Singularity](https://apptainer.org/docs/admin/main/installation.html) container using the definition file `longcallR-nn.def`.
+### Apptainer/Singularity
+
+You can build an [Apptainer/Singularity](https://apptainer.org/docs/admin/main/installation.html) container using the provided `longcallR-nn.def` definition file with the following command:
 ```bash
 cd longcallR-nn
 apptainer build --fakeroot longcallR-nn.sif longcallR-nn.def
+```
+Alternatively, you can pull a pre-built image directly with:
+```bash
+apptainer pull docker://huangnengcsu/longcallr_nn:v0.0.1_gpu
+```
+
+### Docker
+To build a [Docker](https://docs.docker.com/engine/install/) image, run the following command:
+```bash
+cd longcallR-nn
+docker build -t longcallr_nn:v0.0.1_gpu .
+```
+Alternatively, you can pull the Docker image directly with:
+```bash
+docker pull huangnengcsu/longcallr_nn:v0.0.1_gpu
 ```
 
 ## Usage
