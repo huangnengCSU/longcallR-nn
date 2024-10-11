@@ -61,12 +61,11 @@ ENV PATH="$HOME/.cargo/bin:${PATH}"
 # Clean up unnecessary files to reduce image size
 RUN apt-get clean && /tools/miniconda3/bin/conda clean -a -y
 
-# Activate the PyTorch environment
-RUN echo "source /tools/miniconda3/bin/activate pytorch" >> ~/.bashrc
+# Ensure the PyTorch environment is activated by default
+RUN echo "source /tools/miniconda3/bin/activate pytorch" >> /root/.bashrc
 
 # Set the working directory
 WORKDIR /work
 
-# Default command
-CMD ["/bin/bash"]
-
+# Default command to open an interactive shell with the environment activated
+CMD ["/bin/bash", "-l"]
