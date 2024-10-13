@@ -8,7 +8,7 @@ setup(
     name='longcallR_nn',
     version=version['__version__'],
     author="Neng Huang",
-    license="Licensed under the Apache License",
+    license="Licensed under the MIT License",
     author_email="neng@ds.dfci.harvard.edu",
     long_description="longcallR: a deep learning based variant caller for long-reads RNA-seq data",
     url="https://github.com/huangnengCSU/longcallR-nn",
