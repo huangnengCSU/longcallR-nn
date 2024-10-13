@@ -174,7 +174,16 @@ Options:
 ```
 
 ### longcallR-nn call variants
-The pretrained configuration files can be found in the `config` directory, while the model files are located in the `models` directory.
+#### Table 1: Configuration files and pretrained models
+The configuration files and models for ONT and PacBio long-read RNA-seq have been released on [Zenodo](https://zenodo.org/records/13924394). You can use the command `longcallR_nn download` to automatically retrieve the latest versions of these files.
+| Platform | config | model |
+|----------|----------|----------|
+| PacBio Masseq  | hg002_na24385_masseq.yaml  | hg002_na24385_mix_nopass_resnet50_sgd.epoch30.chkpt  |
+| PacBio Isoseq  | hg002_isoseq.yaml  | hg002_baylor_isoseq_nopass_resnet50_sgd.epoch30.chkpt  |
+| ONT cDNA  | wtc11_cdna.yaml  | cdna_wtc11_nopass_resnet50_sgd.epoch30.chkpt  |
+| ONT dRNA  | gm12878_drna.yaml  | drna_gm12878_nopass_resnet50_sgd.epoch30.chkpt  |
+
+Once you have obtained the model files, you can run the following command to call variants:
 ```bash
 longcallR_nn call [-h] -config CONFIG -model MODEL -data DATA [-ref REF] -output OUTPUT [-max_depth MAX_DEPTH] [-batch_size BATCH_SIZE] [--no_cuda]
 
@@ -189,14 +198,6 @@ optional arguments:
   -batch_size BATCH_SIZE    batch size
   --no_cuda                 If running on cpu device, set the argument.
 ```
-
-#### Table 1: config and model for pretrained model
-| Platform | config | model |
-|----------|----------|----------|
-| PacBio Masseq  | config/hg002_na24385_masseq.yaml  | models/hg002_na24385_mix_nopass_resnet50_sgd.epoch30.chkpt  |
-| PacBio Isoseq  | config/hg002_isoseq.yaml  | models/hg002_baylor_isoseq_nopass_resnet50_sgd.epoch30.chkpt  |
-| ONT cDNA  | config/wtc11_cdna.yaml  | models/cdna_wtc11_nopass_resnet50_sgd.epoch30.chkpt  |
-| ONT dRNA  | config/gm12878_drna.yaml  | models/drna_gm12878_nopass_resnet50_sgd.epoch30.chkpt  |
 
 
 ### longcallR-nn train model
