@@ -36,12 +36,14 @@ parallel -j ${n_jobs} \
     --contigs {1} \
     --output '${out}_{1}'" ::: "${CTGS[@]}"
 
+## download the configure files and models
+longcallR_nn download --download_dir models
 
 ## run longcallR-nn (Serial)
-for ctg in "${CTGS[@]}"; do
+for ctg in ${CTGS[@]}; do
     longcallR_nn call \
-    -config config/hg002_na24385_masseq.yaml \
-    -model models/hg002_na24385_mix_nopass_resnet50_sgd.epoch30.chkpt \
+    -config models/pb_masseq_config.yaml \
+    -model models/pb_masseq_model.chkpt \
     -data ${out}_${ctg} \
     -ref ${ref} \
     -output hg002_${ctg}.vcf \
