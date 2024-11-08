@@ -65,9 +65,14 @@ done
 ## Installation
 
 ### Prerequisites
-- [Python, [Rust](https://www.rust-lang.org/), Parallel]
+- Python>=3.9
+- Rust
+- Parallel
 
-### Install
+### Dependencies
+- Pytorch>=1.3
+
+### Install from source code
 1. Clone the repo:
     ```bash
     git clone https://github.com/huangnengCSU/longcallR-nn.git
@@ -84,9 +89,10 @@ done
     conda activate longcallRenv
     # install dependencies
     pip install -r requirements.txt
-    # select one of the following commands to install PyTorch (version 1.3.0 or higher)
-    conda install pytorch torchvision torchaudio torchmetrics pytorch-cuda=<CUDA_VERSION> -c pytorch -c nvidia
-    conda install pytorch torchvision torchaudio torchmetrics cpuonly -c pytorch
+    # install PyTorch gpu version (pytorch>=1.3)
+    conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=12.4 -c pytorch -c nvidia
+    # or install PyTorch cpu version (pytorch>=1.3)
+    conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 cpuonly -c pytorch
     ```
 4. Install longcallR-nn:
     ```bash
@@ -97,6 +103,29 @@ done
     cd longcallR_dp
     cargo build --release
     ```
+
+### Install from Bioconda
+1. Install longcallR-nn:
+   ```bash
+   # create env
+   conda create -n longcallRenv python=3.9
+   # activate env
+   conda activate longcallRenv
+
+   # install PyTorch gpu version (pytorch>=1.3)
+   conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=12.4 -c pytorch -c nvidia
+   # or install PyTorch cpu version (pytorch>=1.3)
+   conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 cpuonly -c pytorch
+   
+   # install longcallR-nn from bioconda
+   conda install -c bioconda longcallr_nn
+   ```
+2. Compile longcallR-dp:
+   ```bash
+   git clone https://github.com/huangnengCSU/longcallR-nn.git
+   cd longcallR-nn/longcallR-dp
+   cargo build --release
+   ```
 
 ### Apptainer/Singularity
 
