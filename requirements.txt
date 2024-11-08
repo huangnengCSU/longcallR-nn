@@ -3,6 +3,5 @@ pyyaml>=5.3
 pysam>=0.16
 tensorboardX>=2.2
 requests
-pytorch>=1.13
 torchvision>=0.14
 torchmetrics>=0.9
