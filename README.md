@@ -90,9 +90,9 @@ done
     # install dependencies
     pip install -r requirements.txt
     # install PyTorch gpu version (pytorch>=1.3)
-    conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=12.4 -c pytorch -c nvidia
+    conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=12.4 torchmetrics -c pytorch -c nvidia
     # or install PyTorch cpu version (pytorch>=1.3)
-    conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 cpuonly -c pytorch
+    conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 torchmetrics cpuonly -c pytorch
     ```
 4. Install longcallR-nn:
     ```bash
@@ -118,7 +118,7 @@ done
    conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 cpuonly -c pytorch
    
    # install longcallR-nn from bioconda
-   conda install -c bioconda longcallr_nn
+   conda install -c bioconda -c conda-forge longcallr_nn
    ```
 2. Compile longcallR-dp:
    ```bash
