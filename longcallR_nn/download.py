@@ -4,20 +4,20 @@ import requests
 # Predefined model_configs dictionary
 model_configs = {
     "ont_cdna": {
-        "config": "https://zenodo.org/records/13924394/files/wtc11_cdna.yaml",
-        "model": "https://zenodo.org/records/13924394/files/cdna_wtc11_nopass_resnet50_sgd.epoch30.chkpt"
+        "config": "https://zenodo.org/records/14605308/files/wtc11_cdna.yaml",
+        "model": "https://zenodo.org/records/14605308/files/cdna_wtc11_nopass_resnet50_sgd.epoch30.chkpt"
     },
     "ont_drna": {
-        "config": "https://zenodo.org/records/13924394/files/gm12878_drna.yaml",
-        "model": "https://zenodo.org/records/13924394/files/drna_gm12878_nopass_resnet50_sgd.epoch30.chkpt"
+        "config": "https://zenodo.org/records/14605308/files/hg002_drna.yaml",
+        "model": "https://zenodo.org/records/14605308/files/drna_hg002_nopass_resnet50_sgd2.epoch31.chkpt"
     },
     "pb_isoseq": {
-        "config": "https://zenodo.org/records/13924394/files/hg002_isoseq.yaml",
-        "model": "https://zenodo.org/records/13924394/files/hg002_baylor_isoseq_nopass_resnet50_sgd.epoch30.chkpt"
+        "config": "https://zenodo.org/records/14605308/files/hg002_isoseq.yaml",
+        "model": "https://zenodo.org/records/14605308/files/hg002_baylor_isoseq_nopass_resnet50_sgd.epoch30.chkpt"
     },
     "pb_masseq": {
-        "config": "https://zenodo.org/records/13924394/files/hg002_na24385_masseq.yaml",
-        "model": "https://zenodo.org/records/13924394/files/hg002_na24385_mix_nopass_resnet50_sgd.epoch30.chkpt"
+        "config": "https://zenodo.org/records/14605308/files/hg002_na24385_masseq.yaml",
+        "model": "https://zenodo.org/records/14605308/files/hg002_na24385_mix_nopass_resnet50_sgd.epoch30.chkpt"
     }
 }
 

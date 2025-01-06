@@ -206,13 +206,13 @@ Options:
 
 ### longcallR-nn call variants
 #### Table 1: Configuration files and pretrained models
-The configuration files and models for ONT and PacBio long-read RNA-seq have been released on [Zenodo](https://zenodo.org/records/13924394). You can use the command `longcallR_nn download` to automatically retrieve the latest versions of these files.
+The configuration files and models for ONT and PacBio long-read RNA-seq have been released on [Zenodo](https://zenodo.org/records/14605308). You can use the command `longcallR_nn download` to automatically retrieve the latest versions of these files.
 | Platform | config | model |
 |----------|----------|----------|
 | PacBio Masseq  | hg002_na24385_masseq.yaml  | hg002_na24385_mix_nopass_resnet50_sgd.epoch30.chkpt  |
 | PacBio Isoseq  | hg002_isoseq.yaml  | hg002_baylor_isoseq_nopass_resnet50_sgd.epoch30.chkpt  |
 | ONT cDNA  | wtc11_cdna.yaml  | cdna_wtc11_nopass_resnet50_sgd.epoch30.chkpt  |
-| ONT dRNA  | gm12878_drna.yaml  | drna_gm12878_nopass_resnet50_sgd.epoch30.chkpt  |
+| ONT dRNA  | hg002_drna.yaml  | drna_hg002_nopass_resnet50_sgd2.epoch31.chkpt  |
 
 Once you have obtained the model files, you can run the following command to call variants:
 ```bash
